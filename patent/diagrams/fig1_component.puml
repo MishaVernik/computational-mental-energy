@@ -1,0 +1,73 @@
+@startuml fig1_system_structure
+!theme plain
+top to bottom direction
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle rectangle
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam component {
+  BackgroundColor<<device>> #E8EEF4
+  BorderColor<<device>> #2C3E50
+  BackgroundColor<<stream>> #E8EEF4
+  BackgroundColor<<server>> #E8EEF4
+  BackgroundColor<<qpu>> #D5E8D4
+  BorderColor<<qpu>> #2D7A2D
+  BackgroundColor<<cme>> #E8E8FF
+  BorderColor<<cme>> #4444AA
+  BackgroundColor<<meta>> #FFF2CC
+  BorderColor<<meta>> #D6A800
+  BackgroundColor<<store>> #F8CECC
+  BorderColor<<store>> #B85450
+  BackgroundColor<<iface>> #DAE8FC
+  BorderColor<<iface>> #6C8EBF
+  BackgroundColor<<nn>> #FFE6CC
+  BorderColor<<nn>> #D79B00
+  BackgroundColor<<async>> #F8CECC
+  BorderColor<<async>> #B85450
+}
+
+
+together {
+  [Пристрій реєстрації EEG\nMuse Athena **(110)**] as P110 <<device>>
+  [Пристрій стримінгу\nRaspberry Pi **(115)**] as P115 <<stream>>
+}
+
+[Модуль приймання даних **(120)**] as P120 <<server>>
+[Модуль сегментації **(130)**] as P130 <<server>>
+[Модуль попередньої обробки **(140)**] as P140 <<server>>
+[Модуль виділення спектральних ознак **(150)**] as P150 <<server>>
+[Модуль формування вектора ознак **(160)**] as P160 <<server>>
+
+together {
+  [Квантовий обчислювальний модуль QPU **(170)**] as P170 <<qpu>>
+  [Модуль обчислення CME **(180)**] as P180 <<cme>>
+  [Модуль метаевристичної оптимізації **(190)**] as P190 <<meta>>
+}
+
+[Модуль класичного\nнейромережевого аналізу **(195)**] as P195 <<nn>>
+[Сховище / журнал **(200)**] as P200 <<store>>
+[Модуль асинхронного\nзбереження даних **(205)**] as P205 <<async>>
+[Інтерфейс інтеграції **(210)**] as P210 <<iface>>
+
+P110 --> P115 : Bluetooth
+P115 --> P120 : OSC/WebSocket
+P120 --> P130 : Дані з мітками
+P130 --> P140 : Вікна Wk
+P140 --> P150 : Фільтр. сигнал
+P150 --> P160 : P_band(ch,t)
+P160 --> P170 : x_t^(q)
+P170 --> P180 : p_flow(t)
+P150 --> P180 : E_band(t)
+P160 --> P180 : c(t)
+P180 --> P200 : CME(t)
+P200 --> P210 : Результати
+P190 --> P170 : Theta, S, D
+P180 --> P190 : L_val
+P170 --> P190 : T_qpu
+P190 --> P200 : Best params
+P120 --> P205 : Асинхронна черга
+P205 --> P200 : Пакетний запис
+P200 --> P195 : Дані для маркування
+P195 --> P200 : Мітки стану потоку
+
+@enduml

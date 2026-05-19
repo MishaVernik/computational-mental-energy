@@ -1,0 +1,120 @@
+{
+  "@context": "dtmi:dtdl:context;3",
+  "@id": "dtmi:cme:Session;1",
+  "@type": "Interface",
+  "displayName": "Session",
+  "description": "A contiguous EEG recording session for a single User. Aggregates Windows.",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "sessionId",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "startedAt",
+      "schema": "dateTime"
+    },
+    {
+      "@type": "Property",
+      "name": "endedAt",
+      "schema": "dateTime"
+    },
+    {
+      "@type": "Property",
+      "name": "activity",
+      "schema": "string",
+      "description": "Current activity tag, e.g. coding, resting, math."
+    },
+    {
+      "@type": "Property",
+      "name": "complexity",
+      "schema": "double",
+      "description": "Task complexity c(t) in [0,1]."
+    },
+    {
+      "@type": "Property",
+      "name": "inferenceMode",
+      "schema": {
+        "@type": "Enum",
+        "valueSchema": "string",
+        "enumValues": [
+          { "name": "quantum", "enumValue": "quantum" },
+          { "name": "classical", "enumValue": "classical" },
+          { "name": "hybrid", "enumValue": "hybrid" }
+        ]
+      }
+    },
+    {
+      "@type": "Property",
+      "name": "cumulativeCmeVn",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "totalWindows",
+      "schema": "integer"
+    },
+    {
+      "@type": "Property",
+      "name": "meanPFlow",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "peakPFlow",
+      "schema": "double",
+      "description": "Maximum p_flow observed across the session."
+    },
+    {
+      "@type": "Property",
+      "name": "flowMinutes",
+      "schema": "double",
+      "description": "Total minutes where p_flow >= 0.85 across this session."
+    },
+    {
+      "@type": "Property",
+      "name": "dataIntegrityScore",
+      "schema": "double",
+      "description": "cleanWindows / max(1, totalWindows) in [0,1]."
+    },
+    {
+      "@type": "Property",
+      "name": "bestActivity",
+      "schema": "string",
+      "description": "Slug of the activity with the highest CME-rate during this session."
+    },
+    {
+      "@type": "Property",
+      "name": "endedReason",
+      "schema": {
+        "@type": "Enum",
+        "valueSchema": "string",
+        "enumValues": [
+          { "name": "userStop",          "enumValue": "userStop" },
+          { "name": "deviceDisconnect",  "enumValue": "deviceDisconnect" },
+          { "name": "timeout",           "enumValue": "timeout" },
+          { "name": "error",             "enumValue": "error" }
+        ]
+      }
+    },
+    {
+      "@type": "Telemetry",
+      "name": "cmeRateVnPerSec",
+      "schema": "double"
+    },
+    {
+      "@type": "Relationship",
+      "name": "contains",
+      "target": "dtmi:cme:Window;1",
+      "displayName": "Contains window"
+    },
+    {
+      "@type": "Relationship",
+      "name": "hasActivity",
+      "target": "dtmi:cme:Activity;1",
+      "displayName": "Current activity",
+      "maxMultiplicity": 1
+    }
+  ]
+}

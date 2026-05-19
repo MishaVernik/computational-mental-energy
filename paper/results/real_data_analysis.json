@@ -1,0 +1,189 @@
+{
+  "totalWindows": 288,
+  "activities": 8,
+  "sessionId": "9f0851fe-e620-4218-8e12-de4065fe84d3",
+  "perActivity": [
+    {
+      "name": "Resting (Eyes Closed)",
+      "complexity": 0.05,
+      "windows": 36,
+      "meanPFlow": 0.5515,
+      "cmeRateVnPerS": 37.14,
+      "totalCmeVn": 6685.83,
+      "dailyMinutes": 60,
+      "extrapolatedDailyVn": 133717.0
+    },
+    {
+      "name": "Browsing",
+      "complexity": 0.2,
+      "windows": 36,
+      "meanPFlow": 0.4835,
+      "cmeRateVnPerS": 112.51,
+      "totalCmeVn": 20250.95,
+      "dailyMinutes": 30,
+      "extrapolatedDailyVn": 202510.0
+    },
+    {
+      "name": "Email",
+      "complexity": 0.3,
+      "windows": 36,
+      "meanPFlow": 0.4151,
+      "cmeRateVnPerS": 132.54,
+      "totalCmeVn": 23856.95,
+      "dailyMinutes": 60,
+      "extrapolatedDailyVn": 477139.0
+    },
+    {
+      "name": "Reading (General)",
+      "complexity": 0.35,
+      "windows": 36,
+      "meanPFlow": 0.4716,
+      "cmeRateVnPerS": 149.26,
+      "totalCmeVn": 26866.77,
+      "dailyMinutes": 60,
+      "extrapolatedDailyVn": 537335.0
+    },
+    {
+      "name": "Reading (Technical)",
+      "complexity": 0.6,
+      "windows": 36,
+      "meanPFlow": 0.4842,
+      "cmeRateVnPerS": 190.53,
+      "totalCmeVn": 34295.57,
+      "dailyMinutes": 60,
+      "extrapolatedDailyVn": 685911.0
+    },
+    {
+      "name": "Coding",
+      "complexity": 0.7,
+      "windows": 36,
+      "meanPFlow": 0.4557,
+      "cmeRateVnPerS": 339.9,
+      "totalCmeVn": 61182.21,
+      "dailyMinutes": 120,
+      "extrapolatedDailyVn": 2447289.0
+    },
+    {
+      "name": "Debugging",
+      "complexity": 0.8,
+      "windows": 36,
+      "meanPFlow": 0.4685,
+      "cmeRateVnPerS": 277.02,
+      "totalCmeVn": 49864.33,
+      "dailyMinutes": 120,
+      "extrapolatedDailyVn": 1994573.0
+    },
+    {
+      "name": "Math / Problem Solving",
+      "complexity": 0.9,
+      "windows": 36,
+      "meanPFlow": 0.4422,
+      "cmeRateVnPerS": 316.65,
+      "totalCmeVn": 56996.87,
+      "dailyMinutes": 60,
+      "extrapolatedDailyVn": 1139937.0
+    }
+  ],
+  "perActivitySimPFlow": {
+    "Resting (Eyes Closed)": {
+      "mean": 0.6512,
+      "std": 0.0726,
+      "windows": 36
+    },
+    "Browsing": {
+      "mean": 0.4092,
+      "std": 0.0986,
+      "windows": 36
+    },
+    "Email": {
+      "mean": 0.4151,
+      "std": 0.0658,
+      "windows": 36
+    },
+    "Reading (General)": {
+      "mean": 0.4011,
+      "std": 0.0945,
+      "windows": 36
+    },
+    "Reading (Technical)": {
+      "mean": 0.4247,
+      "std": 0.1053,
+      "windows": 36
+    },
+    "Coding": {
+      "mean": 0.4017,
+      "std": 0.0975,
+      "windows": 36
+    },
+    "Debugging": {
+      "mean": 0.4217,
+      "std": 0.1039,
+      "windows": 36
+    },
+    "Math / Problem Solving": {
+      "mean": 0.3998,
+      "std": 0.0626,
+      "windows": 36
+    }
+  },
+  "metrics": {
+    "quantum": {
+      "accuracy": 0.7917,
+      "f1": 0.4118,
+      "auroc": 0.8004,
+      "tp": 21,
+      "fp": 55,
+      "fn": 5,
+      "tn": 207
+    },
+    "classical": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "auroc": 1.0,
+      "tp": 26,
+      "fp": 0,
+      "fn": 0,
+      "tn": 262
+    },
+    "hybrid": {
+      "accuracy": 0.9375,
+      "f1": 0.7,
+      "auroc": 0.9667,
+      "tp": 21,
+      "fp": 13,
+      "fn": 5,
+      "tn": 249
+    },
+    "labeledWindows": 288,
+    "varianceReduction": 22.2
+  },
+  "pFlowStats": {
+    "simMean": 0.4406,
+    "simStd": 0.1198,
+    "simVar": 0.014364
+  },
+  "latency": {
+    "meanMs": 0.0,
+    "medianMs": 0.0,
+    "p95Ms": 0.0
+  },
+  "trainedModel": {
+    "algorithm": "genetic",
+    "fitness": 0.8850876923076924,
+    "paramCount": 24
+  },
+  "totals": {
+    "totalCmeVn": 279999.0,
+    "extrapolatedDailyVn": 7618411.0,
+    "rateRatio": 9.15,
+    "maxRate": 339.9,
+    "minRate": 37.14
+  },
+  "ibmSampleSize": 100,
+  "measurementProtocol": {
+    "activitiesRecorded": 8,
+    "windowsPerActivity": 36,
+    "windowDuration_s": 5,
+    "totalRecording_min": 24
+  }
+}

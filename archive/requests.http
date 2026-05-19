@@ -1,0 +1,159 @@
+### CME Simulation API - Example HTTP Requests
+### Use with VS Code REST Client extension or similar tools
+
+@baseUrl = http://localhost:5000
+@qbackendUrl = http://localhost:8001
+
+### Health Checks
+
+# Quantum backend health
+GET {{qbackendUrl}}/health
+
+###
+
+# API dashboard (also serves as health check)
+GET {{baseUrl}}/api/dashboard/summary
+
+###
+
+### Online Inference (CME Computation)
+
+# Compute CME for an EEG window
+POST {{baseUrl}}/api/inference/cme
+Content-Type: application/json
+
+{
+  "sessionId": "11111111-1111-1111-1111-111111111111",
+  "windowId": "window_001",
+  "features": [0.5, -0.3, 0.8, 0.1, -0.2, 0.6, 0.0, -0.4],
+  "taskDifficulty": 0.7
+}
+
+###
+
+# Another CME request with different features
+POST {{baseUrl}}/api/inference/cme
+Content-Type: application/json
+
+{
+  "sessionId": "22222222-2222-2222-2222-222222222222",
+  "windowId": "window_002",
+  "features": [-0.1, 0.4, -0.6, 0.3, 0.9, -0.2, 0.5, 0.1],
+  "taskDifficulty": 0.3
+}
+
+###
+
+### Training Jobs
+
+# Start a new training job (default generations)
+POST {{baseUrl}}/api/training/start
+Content-Type: application/json
+
+{}
+
+###
+
+# Start training job with custom generations
+POST {{baseUrl}}/api/training/start
+Content-Type: application/json
+
+{
+  "totalGenerations": 15
+}
+
+###
+
+# Get training job status (replace with actual job ID)
+@jobId = replace-with-actual-job-id
+GET {{baseUrl}}/api/training/{{jobId}}
+
+###
+
+# List all training jobs
+GET {{baseUrl}}/api/training?limit=20
+
+###
+
+# List only running training jobs
+GET {{baseUrl}}/api/training?status=Running&limit=10
+
+###
+
+### Dashboard & Metrics
+
+# Get system summary
+GET {{baseUrl}}/api/dashboard/summary
+
+###
+
+### Direct Quantum Backend Testing
+
+# Test quantum inference directly (bypasses API)
+POST {{qbackendUrl}}/qpu/infer
+Content-Type: application/json
+
+{
+  "features": [0.5, -0.3, 0.8, 0.1],
+  "modelType": "QSVC"
+}
+
+###
+
+# Quantum backend with different features
+POST {{qbackendUrl}}/qpu/infer
+Content-Type: application/json
+
+{
+  "features": [1.0, -1.0, 0.0, 0.5, -0.5, 0.3, -0.3, 0.7],
+  "modelType": "VQC"
+}
+
+###
+
+# Get quantum backend stats
+GET {{qbackendUrl}}/stats
+
+###
+
+### Example Workflow
+
+# 1. Check system health
+GET {{baseUrl}}/api/dashboard/summary
+
+###
+
+# 2. Submit online inference request
+POST {{baseUrl}}/api/inference/cme
+Content-Type: application/json
+
+{
+  "sessionId": "11111111-1111-1111-1111-111111111111",
+  "windowId": "test_001",
+  "features": [0.2, 0.4, -0.1, 0.8, -0.3, 0.5, 0.1, -0.6],
+  "taskDifficulty": 0.5
+}
+
+###
+
+# 3. Start a training job
+POST {{baseUrl}}/api/training/start
+Content-Type: application/json
+
+{
+  "totalGenerations": 5
+}
+
+###
+
+# 4. Check training job status (use ID from step 3)
+GET {{baseUrl}}/api/training/{{jobId}}
+
+###
+
+# 5. View updated dashboard
+GET {{baseUrl}}/api/dashboard/summary
+
+###
+
+

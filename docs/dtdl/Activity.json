@@ -1,0 +1,34 @@
+{
+  "@context": "dtmi:dtdl:context;3",
+  "@id": "dtmi:cme:Activity;1",
+  "@type": "Interface",
+  "displayName": "Activity",
+  "description": "Catalogue entry for an annotated user activity (coding, meditation, math, ...). One shared twin per ActionDefinition row; per-user usage statistics live on the User--practiced-->Activity relationship.",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "slug",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "displayName",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "defaultDifficulty",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "icon",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "isSystem",
+      "schema": "boolean"
+    }
+  ]
+}

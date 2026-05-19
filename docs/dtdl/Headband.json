@@ -1,0 +1,86 @@
+{
+  "@context": "dtmi:dtdl:context;3",
+  "@id": "dtmi:cme:Headband;1",
+  "@type": "Interface",
+  "displayName": "Headband",
+  "description": "Wearable EEG headband (e.g. Muse Athena). Owns 4 Electrode children at TP9/AF7/AF8/TP10.",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "model",
+      "schema": "string",
+      "description": "e.g. Muse Athena"
+    },
+    {
+      "@type": "Property",
+      "name": "firmwareVersion",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "channelCount",
+      "schema": "integer"
+    },
+    {
+      "@type": "Property",
+      "name": "samplingRateHz",
+      "schema": "integer"
+    },
+    {
+      "@type": "Property",
+      "name": "connected",
+      "schema": "boolean"
+    },
+    {
+      "@type": "Property",
+      "name": "sourceMode",
+      "schema": {
+        "@type": "Enum",
+        "valueSchema": "string",
+        "enumValues": [
+          { "name": "live", "enumValue": "live" },
+          { "name": "simulator", "enumValue": "simulator" },
+          { "name": "replay", "enumValue": "replay" }
+        ]
+      }
+    },
+    {
+      "@type": "Property",
+      "name": "connectionState",
+      "schema": {
+        "@type": "Enum",
+        "valueSchema": "string",
+        "enumValues": [
+          { "name": "connected", "enumValue": "connected" },
+          { "name": "disconnected", "enumValue": "disconnected" },
+          { "name": "poorContact", "enumValue": "poorContact" },
+          { "name": "simulated", "enumValue": "simulated" }
+        ]
+      },
+      "description": "Derived health state: connected (live + good quality), poorContact (live + any channel quality < 0.5), disconnected (no touching), simulated (simulator/replay mode)."
+    },
+    {
+      "@type": "Property",
+      "name": "dropoutCountLastHour",
+      "schema": "integer",
+      "description": "Number of touching->not-touching transitions in the last 60 minutes."
+    },
+    {
+      "@type": "Property",
+      "name": "lastSignalQualityMean",
+      "schema": "double",
+      "description": "Rolling 60s mean of min(channelQuality) in [0,1]."
+    },
+    {
+      "@type": "Telemetry",
+      "name": "batteryLevel",
+      "schema": "double"
+    },
+    {
+      "@type": "Relationship",
+      "name": "hasElectrode",
+      "target": "dtmi:cme:Electrode;1",
+      "maxMultiplicity": 8
+    }
+  ]
+}

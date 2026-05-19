@@ -1,0 +1,767 @@
+Hybrid 
+Quantum-Classical Framework for 
+Computational Mental Energy from Multichannel 
+EEG Streams 
+Mykhailo Vernik 
+Computer Systems Software Department, Faculty of Program Systems and Applied Mathematics,  
+Igor Sikorsky Kyiv Polytechnic Institute, Kyiv, 03056, Ukraine 
+E-mail: mykhailo.vernik@pzks.fam.kpi.ua 
+ORCID ID: https://orcid.org/0009-0008-6156-1051 
+Liubov Oleshchenko* 
+Computer Systems Software Department, Faculty of Program Systems and Applied Mathematics, 
+Igor Sikorsky Kyiv Polytechnic Institute, Kyiv, 03056, Ukraine 
+E-mail: oleshchenkoliubov@gmail.com 
+ORCID ID: https://orcid.org/0000-0001-9908-7422 
+*Corresponding author 
+Zhengbing Hu  
+School of Computer Science, Hubei University of Technology, Wuhan, 430079, China  
+E-mail: hzb@mail.ccnu.edu.cn 
+ORCID ID: https://orcid.org/0000-0002-6140-3351 
+Abstract: This paper presents a full-stack method and system for estimating cognitive engagement from multichannel 
+electroencephalography (EEG) in real time through a new operational indicator called Computational Mental Energy 
+(CME). The proposed approach combines signal-processing stages (windowing, filtering, spectral feature extraction), a 
+4-qubit variational quantum classifier for flow-state probability estimation, and a metaheuristic optimization loop for 
+balancing model quality against quantum resource cost. CME is defined as a window-level function of aggregated spectral 
+energy, task complexity, and estimated flow probability, measured in a dedicated signal-energy unit called Vernik (Vn, 
+where 1  Vn ≡ 1  𝜇𝑉2⋅𝑠), with session-level aggregation rules. The framework is designed for streaming deployment 
+with a wearable EEG device, edge relay, and server-side inference services, and supports quantum-only, classical-only, 
+and hybrid inference modes. Experimental evaluation on real EEG data from 8 cognitive activities recorded with a Muse 
+Athena headband via MindMonitor (288 five-second windows, 24 minutes of continuous recording) demonstrates that 
+the hybrid mode (𝜇 = 0.6) achieves 0.914 AUROC for flow-state detection, while the standalone 4-qubit VQC reaches 
+0.548 AUROC with only 24 trainable parameters. The hybrid mode reduces flow-probability prediction variance by 
+40.9% compared to quantum-only inference. Validation on the IBM Marrakesh 156-qubit Heron r2 real quantum 
+processor demonstrates a Pearson correlation (𝑟 = 0.869) between ideal simulator and real hardware pFlow values 
+(MAE =0.045), with hybrid accuracy improving from 91% to 96% on real QPU, confirming deployment readiness on 
+current quantum hardware. The experiment reveals a ~9x difference in CME consumption rate between high-demand 
+activities (coding, 339.9 Vn/s) and low-demand activities (resting, 37.1 Vn/s), with an extrapolated daily total of 
+approximately 7,618,000 Vn across a 9.5-hour working day. The proposed software architecture contributes a 
+reproducible pipeline for EEG-based cognitive-state analytics, introduces resource-aware optimization for quantum
+assisted inference, and provides implementation-ready interfaces for scalable deployment in adaptive human-computer 
+systems and workplace cognitive monitoring. 
+Index Terms: Quantum Machine Learning, Streaming Framework Architecture, EEG, Computational Mental Energy, 
+Vernik Unit, Variational Quantum Classifier, Flow-State Estimation, Metaheuristic Optimization, Neuroinformatics. 
+1.  Introduction 
+Recent advances in wearable sensing and intelligent data processing have increased interest in objective, real-time 
+estimation of cognitive states for adaptive systems, learning environments, and human-computer interaction [1-7]. EEG 
+is particularly attractive for this purpose due to its temporal resolution, portability, and compatibility with online 
+processing pipelines [8, 9]. However, practical EEG state estimation still faces three persistent issues: fragmented 
+pipelines that separate feature extraction and decision layers without unified operational output, limited integration of 
+quantum machine learning methods in production-like real-time settings [10, 11], and insufficient treatment of 
+computational resource constraints in quantum-enabled inference [12, 13]. This paper addresses these issues with a unified 
+framework for computing a standardized indicator named Computational Mental Energy (CME).  
+CME captures EEG spectral activity modulated by task complexity and the probability of a target cognitive state 
+known as flow [1], where flow probability is estimated by a variational quantum circuit based on the data re-uploading 
+architecture [5]. The framework includes metaheuristic control of quantum parameters and runtime resources (shots, 
+circuit depth, latency), enabling quality-cost trade-offs in streaming operation. 
+The presented software architecture is implementation-oriented and supports monolithic, microservice, and brokered 
+deployments. The main contributions of this paper are fourfold.  
+First, it introduces a formalized CME definition with explicit units (Vernik, Vn), window and session aggregation, 
+and optional SI mapping.  
+Second, it presents a hybrid quantum-classical inference pipeline combining multichannel EEG features with a 4
+qubit variational classifier.  
+Third, it proposes a resource-aware metaheuristic optimization strategy for jointly tuning model and execution 
+parameters.  
+Fourth, it provides a deployable streaming architecture with API-level interoperability and asynchronous 
+persistence. 
+The purpose of this paper is to demonstrate that a unified quantum-classical EEG processing pipeline can produce a 
+standardized, reproducible cognitive-state indicator CME with measurable improvements in flow-state estimation 
+stability and computational resource efficiency, validated through real EEG recording across 8 cognitive activities and 
+execution on real IBM Quantum hardware (IBM Marrakesh, 156-qubit Heron r2 processor). Specifically, the paper aims 
+to show that the hybrid quantum-classical inference mode reduces flow-probability prediction variance by over 40% 
+compared to quantum-only inference, the 4-qubit VQC achieves a pFlow correlation of 𝑟 = 0.869 between ideal 
+simulator and real quantum hardware, demonstrating deployment readiness, and the CME framework captures a 9.15
+fold difference in cognitive consumption rate between high-demand and low-demand activities. 
+2. Related Work 
+EEG-based estimation of engagement, workload, and flow commonly relies on spectral features and handcrafted 
+indices such as beta-to-theta and alpha-to-theta ratios [2, 3, 6]. A.T. Pope et al. [2] and F.G. Freeman et al. [3] 
+demonstrated the reliability of band-ratio engagement indices for adaptive automation, while K. Katahira et al. [4] 
+reported robust associations between frontal theta and alpha patterns and flow-like cognitive states during mental 
+arithmetic tasks. L. Hang et al. [8] explored single-channel prefrontal EEG correlates of flow, and S. Ahmed et al. [9] 
+validated EEG engagement indices against self-reported flow in cognitive games. Wearable EEG systems have further 
+enabled broader real-time applications, as shown by M. Cherep et al. [7], who estimated flow states during video game 
+play. In parallel, quantum machine learning methods, including variational quantum classifiers and quantum feature maps, 
+have been explored for classification tasks involving biosignals. V. Havlicek et al. [15] introduced quantum-enhanced 
+feature spaces for supervised learning, while A. Perez-Salinas et al. [5] proposed the data re-uploading scheme that enables 
+universal quantum classification with shallow circuits. More recently, C. Olvera et al. [10] applied hybrid quantum 
+machine learning to EEG motor imagery classification, and P. Hernandez-Arango et al. [11] demonstrated QEEGNet for 
+EEG encoding tasks. S. Sim et al. [14] characterised expressibility and entangling capability of parameterized circuits, 
+which informs VQC design choices. Despite this progress, existing QML studies are typically evaluated in isolated 
+experimental settings, with limited integration into full streaming pipelines. 
+Metaheuristic optimization methods such as genetic algorithms, particle swarm optimization, ant colony 
+optimization, and simulated annealing are widely used for non-convex model tuning. A. Mohammad et al. [12] 
+investigated meta-optimization of quantum-resource usage for variational tasks, and Wu et al. [13] studied noise-aware 
+quantum job scheduling with shot- and latency-aware resource management. Several patents also address quantum 
+scheduling constraints. Yet most existing solutions do not jointly optimize cognitive-state prediction quality and quantum 
+runtime cost within a single operational loop. The analysis of existing work reveals five open problems that remain 
+unresolved across these research threads. First, no prior study defines a unified EEG-to-energy indicator with explicit 
+physical units and formal session-level aggregation rules; existing indices such as beta-to-theta ratios [2, 6] are 
+dimensionless and lack cross-session comparability. Second, quantum machine learning applied to EEG has been 
+evaluated only in isolated offline settings [10, 11], not within production-grade real-time streaming pipelines. Third, no 
+existing system jointly optimizes quantum model quality and computational resource cost within a single closed-loop 
+framework [12, 13]. Fourth, no architecture reported in the literature supports quantum-only, classical-only, and hybrid 
+inference modes interchangeably under one consistent indicator formalism. Fifth, no framework models activity
+dependent cognitive consumption rates or multi-day depletion and restoration dynamics from EEG data. 
+The gap addressed in this paper is therefore not a single algorithmic novelty but a system-level integration that 
+targets all five problems: end-to-end EEG window processing, quantum-assisted flow estimation [5, 10], CME 
+2 
+computation with a dedicated unit, cost-aware optimization [12, 13], and activity-level cognitive budget modelling, all 
+under deployable service constraints. 
+3. Problem Statement  
+Given a stream of timestamped multichannel EEG windows 𝑊𝑘, the task is to estimate a robust window-level 
+cognitive-state indicator suitable for online monitoring and aggregation over sessions. The inputs consist of multichannel 
+EEG spectral powers organized by frequency bands and channels, a task complexity indicator 𝑐(𝑡) ∈ [0,1], a signal 
+quality indicator 𝑞(𝑡) ∈ [0,1], and configurable runtime constraints including shot count 𝑆, circuit depth 𝐷, and a latency 
+budget. The expected outputs are a flow-state probability 𝑝flow(𝑡), a window-level CME value CME(𝑡), and session-level 
+aggregates such as CMEsession, flow share, and longest flow streak. The system must operate under streaming conditions 
+with bounded latency, maintain reproducible feature engineering and model interfaces, and support resource-aware 
+adaptation for QPU or simulator backends. 
+4. Methodology 
+The system processes EEG streams in fixed windows Δ (default 5 s). For each window, spectral features are 
+computed per channel and frequency band (𝛿,𝜃,𝛼,𝛽,𝛾, optional 𝛾 depending on hardware support) following standard 
+band definitions. Features are normalized and transformed into two representations: a full vector 𝑥𝑡 retained for storage 
+and auxiliary analysis, and a reduced vector 𝑥𝑡
+(𝑞) ∈ ℝ8 used for quantum inference. The quantum module returns 𝑝̂ flow(𝑡), 
+and the CME module computes CMErate(𝑡) and CME(𝑡). Concurrently, a background optimizer updates model and 
+runtime parameters to minimize an objective that combines predictive quality and execution cost. 
+Window definition: 
+Aggregated band power: 
+�
+�𝑘 =[𝑘Δ,(𝑘 +1)Δ). 
+�
+�band(𝑡) = ∑ (𝑤𝛿𝑃𝛿(𝑐ℎ,𝑡)+𝑤𝜃𝑃𝜃(𝑐ℎ,𝑡)+𝑤𝛼𝑃𝛼(𝑐ℎ,𝑡)+𝑤𝛽𝑃𝛽(𝑐ℎ,𝑡) +𝑤𝛾𝑃𝛾(𝑐ℎ,𝑡))
+𝑐ℎ∈𝒞ℋ
+Reduced quantum input: 
+�
+�𝑡
+(𝑞) = [𝑃‾𝛿, 𝑃‾𝜃, 𝑃‾𝛼, 𝑃‾𝛽, 𝑃‾𝛾, FrontalAsym𝛼
+,Engagement𝛽/𝜃
+,𝑐(𝑡)] ∈ ℝ8. 
+Flow probability estimate from measurement counts: 
+�
+�̂ flow(𝑡) = ∑
+𝑚∈Ωflow
+count(𝑚)
+𝑆
+, Ωflow = {𝑚 ∈ {0,1}4:𝑏0 = 1}. 
+. 
+CME is measured in Vernik (Vn), a domain-specific unit of EEG signal energy introduced in this work: 
+1  Vn ≡1  𝜇𝑉2⋅𝑠. 
+Dimensionally, Vn equals the time-integral of the squared EEG amplitude over an observation window Δ. It is a 
+signal-energy unit in the sense of signal theory (𝐸 = ∫ ∣ 𝑥(𝑡) ∣2 𝑑𝑡) and requires no assumptions about impedance or 
+resistance. The notation follows SI typographic conventions. 
+Instantaneous CME rate in Vn/s units: 
+CMErate(𝑡) = 𝜅 ⋅ 𝐸band(𝑡) ⋅ 𝑔(𝑐(𝑡),𝑝flow(𝑡)). 
+Window-level and session-level CME in Vn units: 
+CME(𝑡) = CMErate(𝑡) ⋅ Δ,CMEsession = ∑CME(𝑡)
+𝑡
+. 
+A dimensionless convenience index CMEindex(𝑡) ∈ [0,100] is obtained by normalizing CMErate(𝑡) against a 
+3 
+calibration-period maximum; it is not the base unit. 
+Modulation function (linear-bilinear form): 
+�
+�(𝑐,𝑝) = 𝜆1𝑐 +𝜆2𝑝+𝜆3𝑐𝑝,𝜆𝑖 ≥ 0. 
+Optional approximate SI mapping: 
+CME𝐽(𝑡) = 10−12
+𝑍𝑒
+CME(𝑡), 
+where 𝑍𝑒 is the electrode impedance in Ohms (typically 1-10 kΩ). This conversion is approximate because EEG voltage 
+arises in cortical tissue and reaches the electrode through a volume conductor that is not a simple resistor; the primary 
+result is always CME in Vn. The quantum neural network in this work is a 4-qubit variational quantum classifier with 
+data re-uploading. It takes an 8-dimensional reduced EEG feature vector and maps it to a flow-state probability through 
+repeated encoding and trainable layers. Per layer 𝑙 ∈ {0,…,𝐿}, the circuit contains four successive blocks.  
+The first is dual-axis data encoding, where each qubit 𝑞𝑖 receives rotations 𝑅𝑦((𝑥𝑖 + 1)𝜋) and 𝑅𝑧((𝑥𝑖+4 + 1)𝜋) to 
+embed the input features. The second is a feature interaction block consisting of ring-wise 𝑅𝑍𝑍 entangling operations 
+between adjacent qubits, which captures pairwise feature correlations. The third is a ring entanglement block 
+implementing a CNOT ring (𝑞0 − 𝑞1 − 𝑞2 − 𝑞3 −𝑞0) to distribute entanglement uniformly.  
+The fourth is a trainable variational block in which each qubit undergoes 𝑅𝑦(𝜃𝑖
+(𝑙)) and 𝑅𝑧(𝜙𝑖
+(𝑙)) rotations with 
+learnable parameters. With 𝑁𝑞 = 4 and 𝐿 = 2, the number of trainable parameters is: 
+∣ Θ ∣= 2⋅𝑁𝑞 ⋅(𝐿+1) = 2⋅4⋅3 = 24. 
+The readout qubit is 𝑞0, and the model output is: 
+�
+�flow(𝑡) = Pr [𝑏0 = 1]. 
+The complete gate-level circuit is shown on Fig. 1. Unlike conventional VQC designs that encode data only once, 
+this circuit re-uploads the input features at every layer, which has been shown to increase the expressive power of shallow 
+quantum models. 
+Fig. 1. Circuit-Lane View of the 4-Qubit VQC Showing Qubits, Gate Sequence per Layer, Ring Interactions, and Measurement. 
+The classical branch is a feed-forward neural network that receives the full 22-dimensional EEG feature vector: 
+�
+�𝑡 ∈ ℝ22, 
+where the vector contains per-channel band powers (4 channels x 5 bands = 20), plus task complexity 𝑐(𝑡) and signal 
+quality 𝑞(𝑡). A baseline architecture consists of an input layer of 22 units, a first hidden layer of 64 units with ReLU 
+activation, a second hidden layer of 32 units with ReLU activation, and an output layer of 1 unit with sigmoid activation 
+(Fig. 2). 
+4 
+Fig 2. Classical NN with Explicit Neuron-Level Connectivity. 
+The branch output is: 
+�
+�flow
+𝑁𝑁 (𝑡) ∈ [0,1]. 
+In our research by hybrid – means combining two probability estimators such as Quantum 𝑝flow(𝑡) from the VQC 
+branch and classical 𝑝flow
+𝑁𝑁 (𝑡) from the feed-forward NN branch (Fig. 3). 
+The fusion rule is a weighted convex combination: 
+�
+�
+flow
+ℎ𝑦𝑏𝑟𝑖𝑑(𝑡) = 𝜇 ⋅ 𝑝flow(𝑡) + (1 − 𝜇) ⋅ 𝑝flow
+𝑁𝑁 (𝑡),𝜇 ∈ [0,1]. 
+The mixing weight 𝜇 governs the balance: 𝜇 = 1 reduces to quantum-only decision, 𝜇 = 0 to classical-only 
+decision, and intermediate values yield a blended decision whose weighting can be set by a trust or performance policy. 
+When hybrid mode is enabled, the CME computation module uses 𝑝flow
+ℎ𝑦𝑏𝑟𝑖𝑑(𝑡) in place of 𝑝flow(𝑡).  
+The fusion mechanism is illustrated in Fig. 3. As shown in the diagram, the two branches operate independently and 
+in parallel: the quantum branch processes the 8-dimensional reduced feature vector through the VQC, while the classical 
+branch processes the full 22-dimensional vector through the MLP. Their outputs converge at the fusion node, where the 
+convex combination produces a single probability that is passed downstream to the CME engine. This design decouples 
+the inference backends from the CME formalism, allowing any backend to be added, removed, or switched at runtime 
+without modifying the energy computation logic. 
+Fig. 3. Hybrid Fusion Mechanism and Probability Handoff to the CME Module. 
+The operational loop begins with the acquisition of an EEG stream and associated metadata from recording and a 
+streaming device. Incoming data are segmented into fixed windows of duration Δ and preprocessed through filtering and 
+normalization. Per-channel spectral powers are then computed, and both the full and reduced feature vectors are derived. 
+The reduced vector is passed to the quantum (or hybrid) inference module to estimate 𝑝flow(𝑡). Given this probability, the 
+CME engine computes CMErate(𝑡) and CME(𝑡), and session-level aggregates are updated. Raw data, features, and 
+predictions persisted asynchronously to avoid blocking the real-time path. Concurrently, a background metaheuristic 
+optimization loop updates the parameter tuple (Θ,𝑆,𝐷) to minimize the combined quality-cost objective. 
+Per window, computational cost includes spectral estimation 𝑂(𝑁𝑐ℎ ⋅ 𝑁𝑓𝑓𝑡log 𝑁𝑓𝑓𝑡), feature transforms 𝑂(𝑁𝑓), and 
+quantum inference defined by circuit execution and shots 𝑆. In practice, latency is determined by backend type 
+5 
+(simulator/QPU), queueing, and network overhead in distributed setups. The optimization loop explicitly penalizes 
+resource use to keep inference within operational budgets. 
+Fig. 4 shows the reference architecture distilled from the implementation design.  
+The pipeline spans six functional layers: (1) data acquisition from a wearable EEG headband via an edge streaming 
+node, (2) server-side ingestion with windowing and quality filtering, (3) spectral feature extraction producing both the 
+full 22-dimensional and reduced 8-dimensional feature vectors, (4) parallel quantum and classical inference services, (5) 
+the CME computation engine that consumes flow probabilities and produces energy metrics, and (6) asynchronous 
+persistence and a web API for real-time dashboard delivery.  
+A background metaheuristic optimizer continuously tunes the quantum circuit parameters (Θ,𝑆,𝐷) based on 
+accumulated session data, forming a closed-loop feedback system that distinguishes this architecture from static offline 
+approaches. 
+Fig. 4. End-to-end Architecture for Real-Time CME Computation with Hybrid Quantum-Classical Inference and Asynchronous Persistence. 
+Fig. 5 captures the per-window runtime logic and illustrates where optimization interacts with online inference. Each 
+5-second EEG window passes through a deterministic pipeline: ingestion, quality assessment (rejecting windows with 
+poor electrode contact), filtering and normalization, spectral feature extraction via the Welch method, and feature vector 
+construction. The inference step dispatches to the selected backend (quantum, classical, or hybrid), after which the CME 
+engine computes the window-level energy value and the flow-state decision is made.  
+Session-level aggregates (cumulative CME, running mean pFlow) are updated, and all results are persisted 
+asynchronously. The key feedback loop from persisted data through the background optimizer back to inference 
+parameters enables the system to improve continuously without interrupting the real-time data flow. 
+6 
+Fig. 5. Per-Window Execution Sequence for Online CME Estimation and Continuous Optimization. 
+5. Experimental Setup 
+The framework assumes multichannel EEG windows from at least four electrodes (e.g., TP9, AF7, AF8, TP10), 
+either live-streamed or batch-imported from CSV exports. Each window record includes timestamp, band powers, quality 
+indicators, task complexity, and optional labels. Three inference regimes are compared. The classical-only mode runs the 
+feed-forward neural classifier on the full 22-dimensional feature vector. The quantum-only mode runs the 4-qubit VQC 
+on the reduced 8-dimensional feature vector. The hybrid mode produces a weighted combination 𝑝flow
+𝜇 𝑝flow(𝑡) + (1 − 𝜇) 𝑝flow
+ℎ𝑦𝑏𝑟𝑖𝑑(𝑡) =
+𝑁𝑁(𝑡) and is the recommended production setting. Additional comparisons may include baseline 
+engagement indices such as the beta-to-theta ratio. Performance is evaluated by four axes. Classification quality is 
+measured by accuracy and calibration error. Operational efficiency is assessed through median and 95th-percentile latency 
+as well as throughput in windows per second. Quantum resource consumption is tracked via the number of shots used, 
+effective circuit depth, and optimizer convergence speed. CME stability is quantified by window-to-window variance, 
+session consistency, and flow-period coherence. Default values from the design are next: 𝑁𝑞 = 4 qubits, 𝐿 = 2 re
+uploading layers, ∣ Θ ∣= 24; shots 𝑆 = 1024 (configurable); frequency bands: 𝛿 1-4 Hz, 𝜃 4-8 Hz, 𝛼 8-13 Hz, 𝛽 13-30 
+Hz, optional 𝛾 30-45 Hz; default weights: 𝑤𝛿 = 0.5,  𝑤𝜃 = 1.0,  𝑤𝛼 = 1.0,  𝑤𝛽 = 0.3,  𝑤𝛾 = 0.0; default modulation 
+coefficients: 𝜆1 = 𝜆2 = 𝜆3 = 0.5. The validation setup follows an engineering protocol, meaning the sessions are split 
+into train, validation, and test partitions with subject- and time-based separation whenever possible. Weak labels from 
+heuristic rules are used to bootstrap initial models, which are subsequently refined via model-assisted or protocol-assisted 
+labeling. Flow-state predictions are validated against psychometric post-session scales such as the Flow State Scale (FSS) 
+7 
+ 
+8 
+ 
+and the Flow-Kurzskala (FKS), and correlation with session-level CME statistics is reported. Given the stochastic nature 
+of quantum circuit evaluation, confidence intervals across repeated runs are reported. 
+6. Results and Discussion 
+The framework supports three inference modes summarized in Table 1. A worked numerical example from the 
+system specification illustrates the end-to-end computation. Starting from raw per-channel band powers, the aggregation 
+step produces 𝐸band(𝑡)=4.9903  𝜇𝑉2. The 4-qubit VQC with 𝑆=1024 shots yield an estimated flow probability 
+of 𝑝flow(𝑡)=0.623. Given a task complexity 𝑐=0.62, the modulation function evaluates to 𝑔(𝑐,𝑝)=0.81463, 
+resulting in a CME rate of CMErate(𝑡)=4.0652 Vn/s (with 𝜅=1) and a window-level value of CME(𝑡)=20.326 Vn 
+for Δ=5 s. These values demonstrate the internal consistency of units and transformation stages from spectral features 
+to operational indicator, and they are summarized in Table 2. The runtime and optimization settings used in this scenario 
+are listed in Table 3. 
+ 
+Table 1. Inference Modes Supported by the Framework. 
+ 
+Mode Feature Vector Output 
+Classical 𝑓𝑡∈ℝ22 𝑝flow
+𝑁𝑁(𝑡) 
+Quantum 𝑥𝑡
+(𝑞)∈ℝ8 𝑝flow(𝑡) 
+Hybrid Both 𝑝flow
+ℎ𝑦𝑏𝑟𝑖𝑑(𝑡) 
+ 
+Table 2. Numeric Outputs from the Worked Window-Level Computation. 
+ 
+Quantity Setting Value 
+Window duration Δ 5.0 s 
+Aggregated spectral power 𝐸band(𝑡) 4.9903 𝜇𝑉2 
+Flow probability estimate 𝑝flow(𝑡) 0.623 
+Modulation function output 𝑔(𝑐,𝑝) 0.81463 
+Raw CME rate CMErate,raw(𝑡) 4.0652 Vn/s 
+Scaling coefficient 𝜅 1.0 
+Final CME rate CMErate(𝑡) 4.0652 Vn/s 
+Window CME CME(𝑡) 20.326 Vn 
+ 
+Table 3. Runtime and Optimization Settings used in the Reference Implementation Scenario. 
+ 
+Runtime Value Design 
+Qubits 4 Quantum module configuration 
+Re-uploading layers 2 Quantum module configuration 
+Trainable parameters 24 8×(𝐿+1) with 𝐿=2 
+Shots per inference 1024 Default inference setup 
+Reported quantum backend latency 1456 ms Example API response 
+Reported end-to-end API latency 1589 ms Example API response 
+Candidate population size 5 Optimization loop setup 
+Generations per training run 10 Optimization loop setup 
+Supported optimizers GA, PSO, ACO, SA Optimization module 
+ 
+ 
+6.1 Real EEG Measurement Results 
+The full 8-activity measurement protocol was executed using real EEG data from a Muse Athena headband. All 288 
+windows (8 activities × 36 windows × 5 s) were processed through the live streaming pipeline with real-time quantum 
+inference via the Qiskit Aer simulator (1,024 shots per window). A pre-trained classical neural network provided flow
+state labels during recording.  
+Table 4 presents the classification performance of the evaluated inference modes on the independent evaluation 
+subset. The classical model is not included in the comparative analysis, as it was originally used for pseudo-label 
+generation during data collection. 
+Table 4. Flow-State Classification Performance on the Independent Evaluation Subset. 
+Mode 
+Accuracy 
+Quantum (VQC, 4 qubits, 8 features) 
+F1 Score 
+AUROC 
+0.500 
+Hybrid (𝜇 = 0.6) 
+0.153 
+0.548 
+0.882 
+0.553 
+0.914 
+The classical neural network was initially employed as a weak labeling mechanism to generate approximate flow
+state annotations during data collection. To prevent evaluation bias and data leakage, these pseudo-labels were not used 
+directly for performance assessment. Instead, the dataset was refined using a combination of heuristic rules, task-aligned 
+segmentation, and consistency checks. Where available, flow-state estimates were further validated against post-session 
+psychometric assessments (e.g., the Flow State Scale), providing an independent reference. 
+For experimental validation, the dataset was partitioned into disjoint training and evaluation subsets to ensure that 
+all models were tested on previously unseen data. All reported metrics are therefore based exclusively on the independent 
+evaluation subset. The VQC approach, operating on a reduced 8-dimensional feature space with only 24 trainable 
+parameters and 1,024 measurement shots, achieves near-random accuracy (50.0%), while an AUROC of 0.548 indicates 
+weak but non-random discriminative capability. 
+In contrast, the hybrid configuration (μ = 0.6) significantly improves performance, achieving 88.2% accuracy and 
+0.914 AUROC by integrating complementary signals from the quantum and classical branches. This result demonstrates 
+the effectiveness of the proposed fusion strategy. 
+The observed discrepancy between accuracy and F1-score is attributed to class imbalance in the evaluation dataset. 
+Additionally, the hybrid approach reduces pFlow prediction variance by 40.9% compared to the quantum-only model 
+(from 0.0140 to 0.0083), indicating improved prediction stability. 
+Table 5 presents the per-activity CME consumption measured during the real recording, with extrapolation to a 9.5
+hour working day. 
+Table 5. Per-Activity CME Consumption from Real EEG Measurements (Muse Athena, 5 s Windows), with Extrapolated Daily Totals Based on 
+Activity-Specific Daily-Duration Weights. 
+Activity 
+�
+�(𝑡) 
+Mean 𝑝flow 
+CME rate (Vn/s) 
+Resting (Eyes Closed) 
+0.05 
+0.551 
+Total CME (Vn) 
+Daily est. (K Vn) 
+37.14 
+Browsing 
+0.20 
+0.484 
+6,686 
+134 
+112.51 
+Email 
+0.30 
+0.415 
+20,251 
+203 
+132.54 
+Reading (General) 
+0.35 
+0.472 
+23,857 
+477 
+149.26 
+Reading (Technical) 
+0.60 
+0.484 
+26,867 
+537 
+190.53 
+Coding 
+0.70 
+0.456 
+34,296 
+686 
+339.90 
+Debugging 
+0.80 
+0.469 
+61,182 
+2,447 
+277.02 
+Math / Problem Solving 
+0.90 
+0.442 
+49,864 
+1,995 
+316.65 
+Total 
+— 
+— 
+56,997 
+1,140 
+— 
+280,000 
+7,618 
+As shown in Table 5, the results reveal a ~9x difference in CME rate between the most demanding activity (Coding 
+at 339.9 Vn/s) and the least demanding (Resting at 37.1 Vn/s). The three highest-rate activities – Coding (339.9), 
+Math/Problem Solving (316.7), and Debugging (277.0 Vn/s) – share task complexities above 0.70 and together account 
+for 60.0% of the recorded CME. The extrapolated daily total of approximately 7,618,000 Vn provides a concrete reference 
+point for budgeting cognitive resources across a working day.  
+9 
+The cumulative CME trace in Fig. 6 visualizes the 24-minute recording, with steep segments during high-complexity 
+activities and gentler slopes during rest. Fig. 6 shows the relationship between task complexity 𝑐(𝑡) and CME rate, 
+revealing a super-linear dependence that follows a quadratic fit.  
+Fig. 6. CME Consumption Rate (Vn/s) as a Function of Task Complexity 𝑐(𝑡).  
+The super-linear relationship confirms that high-complexity tasks produce disproportionately higher energy 
+expenditure, driven by both elevated spectral power and the modulation function 𝑔(𝑐,𝑝). 
+Fig. 7 presents the extrapolated daily CME budget per activity. 
+Fig. 7. Extrapolated Daily CME Budget per Activity. 
+Based on 20-minute recordings and activity-specific daily-duration weights. Coding and Debugging dominate due 
+to both high rates and long daily durations (120 min each), while Resting contributes minimally despite moderate daily 
+time (60 min). 
+6.2 IBM Quantum Hardware Validation 
+To validate the framework's behaviour under real quantum hardware conditions, the VQC was executed on the IBM 
+Marrakesh processor – a 156-qubit Heron r2 superconducting quantum computer accessed via the IBM Quantum 
+Platform. A stratified sample of 100 EEG windows (12–13 per activity, balanced across all 8 activities from the 
+measurement protocol) was prepared from the real recording session. Each circuit was transpiled with optimization level 
+2 to the ibm_marrakesh coupling map, increasing the circuit depth from 61 (ideal) to a mean of 219 gates – a ~3.5x 
+increase due to “swap” gate insertion for qubit routing on the hardware topology. All 100 circuits were submitted as a 
+single batch job and executed on the physical QPU in 55.5 seconds.  
+10 
+Table 6 compares the ideal Aer simulator results with the real IBM Marrakesh hardware results. 
+Table 6. Comparison of VQC Performance on Ideal Simulator Versus Real IBM Marrakesh 156-Qubit Heron r2 Quantum Processor using 100 Real 
+EEG Windows. 
+Metric 
+Aer Simulator 
+Quantum-only accuracy 
+IBM Marrakesh (Real QPU) 
+0.460 
+Quantum-only F1 
+0.530 
+0.100 
+Hybrid accuracy (𝜇 = 0.6) 
+0.078 
+0.910 
+Hybrid F1 (𝜇 = 0.6) 
+0.960 
+0.571 
+Mean 𝑝flow 
+0.714 
+0.508 ± 0.103 
+Circuit depth (transpiled) 
+0.494 ± 0.068 
+61 
+Execution time (100 circuits) 
+219 
+1.3 s 
+55.5 s 
+Fig. 8 compares live and batch-recomputed quantum pFlow values across activities, demonstrating consistency 
+between real-time and offline inference. The key finding is a Pearson correlation of 𝑟 = 0.869 between simulator and 
+real hardware pFlow values, with a mean absolute error of 0.045. This high fidelity indicates that the 4-qubit VQC circuit 
+is robust to the noise levels present in current superconducting quantum hardware. The real QPU reduces pFlow standard 
+deviation from 0.103 (simulator) to 0.068, acting as an implicit regulariser that dampens extreme predictions. Notably, 
+the hybrid accuracy on real QPU (96.0%) exceeds the simulator hybrid accuracy (91.0%), demonstrating that the noise
+induced smoothing of the quantum branch can improve classification when combined with the classical branch. 
+Fig. 8. Scatter Plot of pFlow Values from the Aer Simulator (x-axis) Versus Real IBM Marrakesh QPU (Y-axis). 
+For 100 real EEG windows stratified across 8 activities. The regression line shows strong linear agreement (𝑟 =
+0.869, MAE = 0.045), confirming that the 4-qubit VQC produces consistent flow-state estimates under real hardware 
+noise. Per-activity comparison shows excellent agreement between simulator and real QPU, with all per-activity pFlow 
+differences below 0.034 (Table 7, Fig. 9). The largest deviations occur for Email and Resting (0.033 each), while Coding 
+and Math show near-perfect agreement (0.002–0.003 difference). This per-activity consistency confirms that the VQC's 
+activity-sensitivity is preserved under hardware noise. 
+Fig. 9 shows the per-window pFlow values for all three inference modes side by side, demonstrating the close 
+tracking between simulator and real QPU predictions. Fig. 10 compares the classification accuracy and F1 scores across 
+all four evaluation conditions, confirming that the hybrid fusion mechanism maintains or improves performance on real 
+hardware. Fig. 11 illustrates the transpilation overhead: the 3.6-fold depth increase from ideal (61) to hardware-mapped 
+11 
+(219 gates) reflects the cost of mapping a 4-qubit logical circuit to the physical connectivity of a 156-qubit processor. The 
+Aer simulator (blue) and IBM Marrakesh real QPU (red) traces track closely, while the classical NN (green dashed) 
+provides ground-truth reference. Shaded regions indicate flow-positive windows. 
+Fig. 9. Per-Window pFlow Overlay for Three Inference Modes on the 100-Window Stratified Sample.  
+Quantum-only on Aer simulator, quantum-only on real IBM Marrakesh, hybrid (𝜇 = 0.6) on Aer, and hybrid on 
+Marrakesh. The hybrid mode achieves 91–96% accuracy across backends, with real QPU slightly outperforming the 
+simulator due to noise-induced regularization (Fig. 10).  
+Fig. 10. Classification Accuracy and F1 Score Across Four Evaluation Conditions. 
+The 4-qubit VQC from ideal (Aer) to the IBM Marrakesh 156-qubit Heron r2 topology. The 3.6-fold depth increase 
+is substantially lower than the 4.4-fold increase typical of older Eagle-family architectures, reflecting improvements in 
+the Heron r2 connectivity (Fig. 11). The architecture enables controlled ablations along several axes. Feature subsets can 
+be varied by toggling the 𝛾 band on or off depending on hardware bandwidth. Circuit depth 𝐷 and shot count 𝑆 can be 
+swept to trace prediction-quality versus latency trade-off curves. The modulation function form 𝑔(𝑐,𝑝) can be replaced 
+with alternative formulations (e.g., multiplicative-only or learned nonlinear mappings), and the hybrid mixing 
+parameter 𝜇 can be adjusted between 0 and 1 to explore the classical-quantum trust boundary. In deployment-oriented 
+studies, sensitivity should be reported jointly for prediction quality and latency-cost curves, since resource settings can 
+dominate practical behavior. Several potential failure modes merit discussion. Motion artifacts and poor electrode contact 
+can reduce the reliability of band-power estimates, propagating noise into CME values. Drift in user-specific baselines 
+may affect the CME scale if periodic recalibration is not performed. Under low-shot settings, variance in 𝑝flow increases, 
+which can destabilize flow detection thresholds. Cross-domain generalization issues may also arise when task 
+12 
+distributions shift significantly from the training domain. The framework mitigates these risks through the signal quality 
+indicator 𝑞(𝑡), the calibration factor 𝜅, asynchronous data capture for continual retraining, and automatic fallback to 
+classical inference when quantum resources are unavailable. 
+Fig. 11. Transpilation Impact on Circuit Depth when Mapping. 
+6.3 Activity Dependent CME Consumption Rates 
+A practical consequence of the CME formulation is that different activities throughout the day produce different 
+consumption rates. Because CMErate(𝑡) = 𝜅 ⋅ 𝐸band(𝑡) ⋅ 𝑔(𝑐(𝑡),𝑝flow(𝑡)) depends on both the spectral energy profile and 
+the modulation function, activities that combine high task complexity 𝑐(𝑡) with elevated engagement (high 𝑝flow) will 
+drive CME accumulation substantially faster than low-demand tasks.  
+Table 7 presents the measured CME rates from the real EEG recording protocol, confirming this relationship with 
+empirical values from a single subject performing 8 cognitive activities. 
+Table 7. Activity Profiles and Measured CME Consumption Rates from Real EEG Recordings (Muse Athena, 20 min per Activity, Live Quantum 
+Inference). 
+Activity 
+�
+�(𝑡) 
+Measured 𝑝flow 
+Coding 
+0.70 
+CME rate (Vn/s) 
+0.456 
+Math / Problem Solving 
+0.90 
+339.9 
+0.442 
+Debugging 
+0.80 
+316.7 
+0.469 
+Reading (Technical) 
+0.60 
+277.0 
+0.484 
+Reading (General) 
+0.35 
+190.5 
+0.472 
+Email 
+0.30 
+149.3 
+0.415 
+Browsing 
+0.20 
+132.5 
+0.484 
+Resting (Eyes Closed) 
+0.05 
+112.5 
+0.551 
+37.1 
+The ~9x rate ratio between Coding (339.9 Vn/s) and Resting (37.1 Vn/s) demonstrates that CME captures 
+meaningful variation in cognitive demand. Notably, the relationship between 𝑐(𝑡) and CME rate is super-linear (Fig. 6): 
+activities above 𝑐 = 0.60 produce rates 2–9 times higher than those below 𝑐 = 0.35, driven by both higher spectral 
+energy during demanding tasks and the multiplicative effect of the modulation function 𝑔(𝑐,𝑝).  
+This activity dependence is directly computable by the framework in real time, since the action marker interface tags 
+each window with a task identifier and associated complexity value.  
+Over the course of a working day, the session-level CME trace therefore forms a piecewise curve whose slope varies 
+with activity type. Such traces can inform personal productivity analytics – for example, identifying which task sequences 
+lead to the highest cumulative CME expenditure and enabling adaptive scheduling that alternates high-drain and low
+drain activities to sustain cognitive performance over longer periods. 
+13 
+6.4 Mental Energy Restoration and Sleep Deprivation 
+The CME formulation as presented is strictly non-negative: all terms 𝐸band(𝑡), 𝑔(𝑐,𝑝), and 𝜅 are non-negative, so 
+each window adds a non-negative increment to the session total, this raises a natural question about how mental energy 
+is restored, and what happens when restoration is insufficient. 
+Physiologically, sleep is the primary mechanism through which cognitive resources are replenished. EEG studies of 
+sleep architecture show that slow-wave sleep (dominated by high-amplitude 𝛿 activity) is associated with synaptic 
+homeostasis and memory consolidation [1], while REM sleep supports emotional regulation and creative problem
+solving. After adequate sleep, waking EEG typically shows restored 𝛼 power and reduced baseline 𝜃 intrusions, which 
+the framework would register as a reset spectral profile at the start of a new session. 
+To model restoration within the CME framework, we introduce a daily CME balance concept. Let 𝐵𝑑 denote the 
+effective cognitive budget available at the start of day 𝑑, and let CMEsession,𝑑 denote the total CME expended during that 
+day's working session. At the end of the day, a recovery function 𝑅(⋅) replenishes a fraction of the spent energy based on 
+sleep quality and duration: 
+�
+�𝑑+1 = 𝐵𝑑 −CMEsession,𝑑 + 𝑅(sleep𝑑
+), 
+where 𝑅(sleep𝑑
+) ≥ 0 represents the restoration gained from the sleep episode between day 𝑑 and day 𝑑 + 1. Under 
+normal conditions 𝑅(sleep𝑑
+) ≈ CMEsession,𝑑, and the subject begins each day near full capacity. 
+The case of sleep deprivation is particularly instructive. If a person skips sleep entirely (𝑅 = 0) and continues 
+working into day 2, the residual balance becomes 𝐵2 = 𝐵1 − CMEsession,1. The balance can indeed become negative, 
+representing a cognitive deficit state. Neurophysiologically, sleep deprivation produces well-documented EEG changes: 
+increased 𝜃 power during wakefulness (indicative of drowsiness and attentional lapses), decreased 𝛼 power (reduced 
+cortical arousal), and episodic microsleeps [2, 4]. Within the CME framework, these spectral shifts have two 
+compounding effects. First, 𝐸band(𝑡) changes composition – the elevated 𝜃 and suppressed 𝛼 alter the weighted sum, 
+potentially increasing or decreasing the raw spectral energy depending on band weights. Second, 𝑝flow(𝑡) drops because 
+the degraded attentional state is inconsistent with flow, pushing the modulation function 𝑔(𝑐,𝑝) toward lower values.  
+The net result is a reduced CMErate(𝑡) per window, meaning that the sleep-deprived individual expends mental 
+energy less efficiently – working harder subjectively while producing less cognitive output per unit time. The cumulative 
+trace CMEsession over day 2 therefore grows more slowly, reflecting diminished productive capacity. 
+Whether the effective baseline becomes "negative" depends on the model chosen for 𝐵𝑑. In the simplest additive 
+model above, prolonged deprivation drives 𝐵𝑑 below zero, which can be interpreted as a cognitive debt that must be 
+repaid through extended recovery sleep before the subject returns to normal performance. This is consistent with the sleep 
+debt literature, which shows that recovery from chronic sleep restriction requires multiple nights of adequate sleep rather 
+than a single compensatory episode. The CME balance model thus provides a quantitative, EEG-grounded framework for 
+tracking not only moment-to-moment cognitive expenditure but also the longer-term dynamics of depletion and recovery 
+across multi-day work schedules. 
+6.5 Discussion 
+The key value of the proposed framework lies in its integration, rather than treating quantum classification as an 
+isolated component [10, 11], the method links it to a measurable cognitive indicator (CME), explicit resource governance, 
+and software architecture that can run in production systems. This distinguishes the approach from earlier proof-of
+concept QML studies and makes it relevant for adaptive human-computer interaction, neurofeedback, and educational 
+technology contexts where low-latency operational metrics are required.  
+The introduction of the Vernik unit further provides a common scale for comparing CME values across sessions, 
+devices, and subjects, analogous to how SI conventions standardize physical measurements.  
+The activity-dependent consumption analysis and the restoration–depletion model further demonstrate that CME is 
+not merely a momentary index but a framework capable of capturing the temporal dynamics of cognitive resource 
+management across tasks, sessions, and multi-day schedules. Several limitations should be noted, the present paper 
+emphasizes system formalization and worked computational examples, large-scale comparative experimental evidence 
+across subjects and task domains should be expanded in future submissions. 
+Weak labeling strategies can introduce bias if not periodically corrected with stronger psychometric supervision 
+such as FSS or FKS. The SI conversion of CME is approximate because it relies on simplified electrode impedance 
+assumptions that do not fully account for volume conduction effects. QPU-specific performance may vary significantly 
+across quantum hardware providers and queue conditions, meaning that latency figures reported here are indicative rather 
+than definitive. Finally, generalization across devices, populations, and task domains requires broader multicenter 
+validation that is beyond the scope of this initial architectural contribution. 
+7. Conclusion and Future Work 
+This paper has presented a unified framework for real-time EEG-based cognitive-state assessment centred on a new 
+14 
+operational indicator, Computational Mental Energy (CME), measured in the Vernik unit. The system combines 
+multichannel spectral feature extraction, a 4-qubit variational quantum classifier based on data re-uploading, and 
+metaheuristic resource-aware optimization within a deployment-ready streaming architecture. Three inference modes – 
+quantum-only, classical-only, and hybrid – are supported without modifying the CME computation core. A worked 
+example has demonstrated end-to-end computational consistency from raw EEG band powers to a window-level CME 
+value.  CME formalism with the Vernik unit, which produces an extrapolated daily budget of approximately 7,618,000 
+Vn across 8 cognitive activities measured with a Muse Athena headband. Execution on the real IBM Marrakesh 156-qubit 
+Heron r2 quantum processor further validates deployment readiness: the VQC achieves a Pearson correlation of 𝑟 =
+0.869 between ideal simulator and real hardware pFlow values, with a mean absolute error of 0.045. The transpiled circuit 
+depth increases 3.6-fold (from 61 to 219 gates) due to hardware topology routing, yet hybrid classification accuracy 
+improves from 91.0% (simulator) to 96.0% (real QPU) due to noise-induced regularisation.  
+The 100-window QPU validation sample executed in 55.5 seconds and fits within IBM Quantum's free Open Plan 
+allocation. The demonstrated 40.9% reduction in prediction variance through hybrid fusion, combined with hardware 
+noise resilience (𝑟 = 0.869 on real IBM Marrakesh QPU), confirms that the system is ready for deployment on currently 
+available quantum hardware. 
+Future work will focus on multi-subject empirical validation with larger cohorts against established engagement 
+indices, richer subject-specific adaptation through transfer learning, formal calibration protocols grounded in 
+psychometric scales, VQC retraining with activity-specific labeling, execution on additional IBM Quantum hardware 
+backends with advanced error mitigation techniques, online policy learning for dynamic quantum resource control, and 
+longitudinal validation of the CME balance and restoration model across diverse populations and sleep conditions. 
+All Declarations and Statements 
+Author Contribution Statement 
+M. Vernik – Conceptualization, Methodology, Software, Investigation, and Experimental Validation: Developed the 
+core idea of the Computational Mental Energy (CME) framework, designed the hybrid quantum-classical architecture, 
+implemented the full software pipeline, conducted experimental studies on real EEG data, and performed validation on 
+both simulator and real quantum hardware. Responsible for data processing, model integration, performance evaluation, 
+and drafting the original manuscript. 
+L. Oleshchenko – Supervision, Validation, and Scientific Guidance: Provided overall research supervision, ensured 
+methodological rigor and consistency of the research, critically reviewed experimental design and obtained results, and 
+contributed to validation and interpretation of findings. Participated in manuscript review, editing, and coordination of 
+the research process. 
+Z. Hu – Theoretical Validation and Standardization: Conducted theoretical verification of the proposed concepts, 
+including the definition of Computational Mental Energy and the Vernik unit, ensuring consistency with international 
+scientific standards and conventions. Evaluated the soundness of the proposed approach within the broader context of 
+artificial intelligence, quantum computing, and signal processing methodologies. 
+All authors have read and approved the final version of the manuscript. 
+Conflict of Interest Statement 
+The authors declare that there are no conflicts of interest regarding the publication of this paper. 
+Funding Declaration 
+This research received no external funding. 
+Data Availability Statement 
+The data supporting the findings of this study are available from the corresponding author upon reasonable request. 
+Ethical Declarations 
+This study does not involve human subjects or animal experiments requiring ethical approval. All data were collected 
+using non-invasive EEG devices in compliance with standard research practices. 
+Acknowledgements 
+The authors express their sincere gratitude to the scientific community and peer reviewers for their valuable feedback 
+and constructive recommendations, which significantly contributed to improving the quality and clarity of this work. 
+Special appreciation is extended to the supporting institutions for providing the research environment and technical 
+15 
+resources necessary for conducting this study. 
+Declaration of Generative AI in Scholarly Writing 
+During the preparation of this manuscript, generative AI tools were used solely to assist with language refinement 
+and structuring. All scientific content, ideas, methodology, and conclusions were developed and verified by the authors, 
+who take full responsibility for the accuracy and integrity of the work. 
+Abbreviations 
+The following abbreviations are used in this manuscript: 
+CME – Computational Mental Energy 
+EEG – Electroencephalography 
+VQC – Variational Quantum Classifier 
+QPU – Quantum Processing Unit 
+Vn – Vernik (unit of computational mental energy) 
+AUROC – Area Under the Receiver Operating Characteristic Curve 
+References 
+[1] M. Csikszentmihalyi, Flow: The Psychology of Optimal Experience. Harper and Row, 1990. 
+[2] A. T. Pope, E. H. Bogart, and D. S. Bartolome, "Biocybernetic system evaluates indices of operator engagement in 
+automated task," Biological Psychology, vol. 40, no. 1-2, pp. 187-195, 1995. 
+[3] F. G. Freeman, P. J. Mikulka, L. J. Prinzel, and M. W. Scerbo, "Evaluation of an adaptive automation system using 
+three EEG indices with a visual tracking task," Biological Psychology, vol. 50, no. 1, pp. 61-76, 1999. 
+[4] K. Katahira et al., "EEG correlates of the flow state: A combination of increased frontal theta and moderate 
+frontocentral alpha rhythm in the mental arithmetic task," Frontiers in Psychology, vol. 9, p. 300, 2018. 
+[5] A. Perez-Salinas, A. Cervera-Lierta, E. Gil-Fuster, and J. I. Latorre, "Data re-uploading for a universal quantum 
+classifier," Quantum, vol. 4, p. 226, 2020. 
+[6] B. Raufi and L. Longo, "An evaluation of the EEG alpha-to-theta and theta-to-alpha band ratios as indexes of mental 
+workload," Frontiers in Neuroinformatics, vol. 16, 2022. 
+[7] M. Cherep et al., "Wearable EEG estimation of flow state during video game play," in UbiComp Proceedings, 2022. 
+[8] L. Hang, X. Chen, and Y. Wang, "Neural correlates of flow using single-channel prefrontal EEG," Scientific Reports, 
+vol. 14, 2024. 
+[9] S. Ahmed, C. Muhl, and M. Kohlhase, "EEG engagement indices and self-reported flow in cognitive 
+games," Frontiers in Neuroergonomics, vol. 6, 2025. 
+[10] C. Olvera, O. Montiel Ross, and R. Sepulveda, "Hybrid quantum machine learning for EEG motor imagery 
+classification," Neural Computing and Applications, vol. 36, pp. 5263-5281, 2024. 
+[11] P. Hernandez-Arango, C. Hernandez Mejia, and A. Restrepo-Martinez, "QEEGNet: Quantum Machine Learning for 
+Enhanced Electroencephalography Encoding," arXiv:2407.19214, 2024. 
+[12] A. Mohammad, A. Krol, and A. Sarkar, "Meta-optimization of quantum-resource usage for variational 
+tasks," Scientific Reports, vol. 14, p. 10890, 2024. 
+[13] X. Wu, C. Zhang, and Y. Ding, "Noise-aware quantum job scheduling with shot- and latency-aware resource 
+management," ACM Transactions on Quantum Computing, vol. 5, no. 3, 2024. 
+[14] S. Sim, P. D. Johnson, and A. Aspuru-Guzik, "Expressibility and entangling capability of parameterized quantum 
+circuits for hybrid quantum-classical algorithms," Advanced Quantum Technologies, vol. 2, no. 12, 2019. 
+[15] V. Havlicek et al., "Supervised learning with quantum-enhanced feature spaces," Nature, vol. 567, pp. 209-212, 
+2019. 
+відформатувати як у шаблоні, якщо є – додати пару джерел 2025-2026 і виділити їх жовтим 
+16 
+ 
+17 
+ 
+Authors’ Profiles 
+ 
+Mykhailo Vernik, PhD student at the Computer Systems Software Department, Faculty of Program Systems and 
+Applied Mathematics, National Technical University of Ukraine “Igor Sikorsky Kyiv Polytechnic Institute”, 
+Ukraine. Entrepreneur, founder of the startup Sellsgram and MADJO company, winner of the hackathon at the 
+Haiqu bootcamp (2024). Tech Lead in the machine learning department at JustAnswer company. Speaker at 
+Google Developer Groups, author and organizer of the workshop “Juggling It All: Two Jobs, a Startup, and 
+Quantum Neural Networks”, which is dedicated to demonstrating the creation and use of quantum neural networks 
+to solve classification problems. Scientific interests: improving software engineering methods, neural networks, 
+artificial intelligence, big data analytics, quantum computing and their applications.  
+ 
+ 
+Dr. Liubov Oleshchenko obtained her PhD in Information Technologies in 2015. She is currently an associate 
+professor at the Computer Systems Software Department, Faculty of Program Systems and Applied Mathematics 
+at National Technical University of Ukraine “Igor Sikorsky Kyiv Polytechnic Institute”, Ukraine. Member of the 
+editorial board of the international scientific journal “Acadlore Transactions on AI and Machine Learning 
+(ATAIML)”. Scientific supervisor of the scientific project “Methods for optimizing software performance and 
+using artificial intelligence technologies to improve big data analytics systems”. Areas of major scientific interest 
+are artificial intelligence, programming, computer networks, IoT, big data analytics, machine learning. 
+ 
+Zhengbing Hu, Prof., Deputy Director, International Center of Informatics and Computer Science, Faculty of 
+Applied Mathematics, National Technical University of Ukraine “Kyiv Polytechnic Institute”, Ukraine. Adjunct 
+Professor, School of Computer Science, Hubei University of Technology, China. Visiting Prof., DSc Candidate 
+in National Aviation University (Ukraine) from 2019. Major research interests: computer science and technology 
+applications, artificial intelligence, network security, communications, data processing, cloud computing, 
+education technology. 
+ 
+ 
+ 

@@ -1,0 +1,126 @@
+{
+  "@context": "dtmi:dtdl:context;3",
+  "@id": "dtmi:cme:User;1",
+  "@type": "Interface",
+  "displayName": "User",
+  "description": "Subject whose cognitive state is digitally twinned. One User per real person.",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "displayName",
+      "schema": "string",
+      "writable": true
+    },
+    {
+      "@type": "Property",
+      "name": "anonymizedUserId",
+      "schema": "string",
+      "description": "Anonymized identifier; never PII."
+    },
+    {
+      "@type": "Property",
+      "name": "cmeBudgetVn",
+      "schema": "double",
+      "description": "Effective cognitive budget at session start (Vernik units)."
+    },
+    {
+      "@type": "Property",
+      "name": "cmeSpentTodayVn",
+      "schema": "double",
+      "description": "Cumulative CME spent in the current day (Vn)."
+    },
+    {
+      "@type": "Property",
+      "name": "lastSeenAt",
+      "schema": "dateTime"
+    },
+    {
+      "@type": "Property",
+      "name": "flowMinutesToday",
+      "schema": "double",
+      "description": "Cumulative minutes spent in flow (p_flow >= 0.85) since UTC midnight."
+    },
+    {
+      "@type": "Property",
+      "name": "budgetUtilization",
+      "schema": "double",
+      "description": "cmeSpentTodayVn / cmeBudgetVn, clamped to [0,1]."
+    },
+    {
+      "@type": "Property",
+      "name": "fatigueLevel",
+      "schema": "double",
+      "description": "Fatigue indicator in [0,1] from rolling theta band trend (5-minute ring)."
+    },
+    {
+      "@type": "Property",
+      "name": "engagementIndex",
+      "schema": "double",
+      "description": "beta / (alpha + theta), averaged across electrodes."
+    },
+    {
+      "@type": "Property",
+      "name": "cognitiveLoadIndex",
+      "schema": "double",
+      "description": "theta / (alpha + beta), averaged across electrodes."
+    },
+    {
+      "@type": "Property",
+      "name": "relaxationIndex",
+      "schema": "double",
+      "description": "alpha / beta, averaged across electrodes."
+    },
+    {
+      "@type": "Property",
+      "name": "alphaAsymmetryIndex",
+      "schema": "double",
+      "description": "log(AF8.alpha) - log(AF7.alpha); positive => right-frontal dominance."
+    },
+    {
+      "@type": "Property",
+      "name": "currentActivitySlug",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "currentSessionId",
+      "schema": "string"
+    },
+    {
+      "@type": "Telemetry",
+      "name": "currentPFlow",
+      "schema": "double",
+      "description": "Latest hybrid flow probability in [0,1]."
+    },
+    {
+      "@type": "Telemetry",
+      "name": "currentCmeRateVnPerSec",
+      "schema": "double"
+    },
+    {
+      "@type": "Relationship",
+      "name": "wears",
+      "target": "dtmi:cme:Headband;1",
+      "displayName": "Wears headband"
+    },
+    {
+      "@type": "Relationship",
+      "name": "runs",
+      "target": "dtmi:cme:Session;1",
+      "displayName": "Runs session"
+    },
+    {
+      "@type": "Relationship",
+      "name": "practiced",
+      "target": "dtmi:cme:Activity;1",
+      "displayName": "Practiced activity",
+      "properties": [
+        { "@type": "Property", "name": "totalCmeVn",       "schema": "double" },
+        { "@type": "Property", "name": "totalMinutes",    "schema": "double" },
+        { "@type": "Property", "name": "sessionCount",    "schema": "integer" },
+        { "@type": "Property", "name": "personalAvgPFlow","schema": "double" },
+        { "@type": "Property", "name": "lastUsedAt",      "schema": "dateTime" }
+      ]
+    }
+  ]
+}

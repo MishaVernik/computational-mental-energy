@@ -1,0 +1,40 @@
+@startuml fig2_online_cme_flow
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam sequenceMessageAlign center
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+
+
+actor "Клієнт" as Client
+participant "Web API\n(120)" as API #E8EEF4
+participant "Попередня\nобробка (140)" as Preprocess #E8EEF4
+participant "QPU\n(170)" as QPU #D5E8D4
+participant "Модуль\nCME (180)" as CME #E8E8FF
+
+Client -> API : Запит обчислення CME\n{features, taskDifficulty}
+API -> Preprocess : Нормалізація features
+Preprocess --> API : f_norm
+
+API -> QPU : Інференс {x_t^(q), trainedParams}
+note right of QPU
+  Підшар A: R_y + R_z (8 ознак)
+  Підшар B: ZZ-взаємодія ознак
+  Підшар C: Кільцеве заплутування CNOT
+  Підшар D: Варіаційний анзац R_y(theta), R_z(phi)
+  Повторення L+1 разів (data re-uploading)
+  Вимірювання: S shots
+end note
+QPU --> API : p_flow(t), shots, depth
+
+API -> CME : E_band(t), c(t), p_flow(t)
+note right of CME
+  g(c,p) = lambda1*c + lambda2*p + lambda3*c*p
+  CME_rate(t) = kappa * E_band * g(c,p)
+  CME(t) = CME_rate(t) * Delta
+end note
+CME --> API : CME(t)
+
+API --> Client : {cmeVn, cmeIndex, pFlow, shots, depth, latencyMs}
+
+@enduml

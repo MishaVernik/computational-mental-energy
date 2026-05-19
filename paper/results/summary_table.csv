@@ -1,0 +1,39 @@
+Section,Key,Value
+Data,Total windows,6840
+Data,Total hours,9.5
+Data,Activities,8
+Data,Flow-positive pct,38.7%
+Quantum,accuracy,0.6652
+Quantum,f1,0.5874
+Quantum,auroc,0.7258
+Classical,accuracy,0.7861
+Classical,f1,0.7331
+Classical,auroc,0.8244
+Hybrid,accuracy,0.7763
+Hybrid,f1,0.7165
+Hybrid,auroc,0.8218
+Quantum,latency_ms_per_window,5.89
+Classical,latency_ms_per_window,0.00
+Hybrid,latency_ms_per_window,5.89
+CME,Morning routine total Vn (hybrid),17400.3
+CME,Morning routine Vn/s rate (hybrid),9.667
+CME,Commute total Vn (hybrid),15990.9
+CME,Commute Vn/s rate (hybrid),8.884
+CME,Deep coding 1 total Vn (hybrid),274817.5
+CME,Deep coding 1 Vn/s rate (hybrid),38.169
+CME,Reading novel total Vn (hybrid),48715.7
+CME,Reading novel Vn/s rate (hybrid),13.532
+CME,Lunch break total Vn (hybrid),17779.1
+CME,Lunch break Vn/s rate (hybrid),4.939
+CME,Admin email total Vn (hybrid),36913.1
+CME,Admin email Vn/s rate (hybrid),10.254
+CME,Deep coding 2 total Vn (hybrid),273803.5
+CME,Deep coding 2 Vn/s rate (hybrid),38.028
+CME,Evening relaxation total Vn (hybrid),33926.4
+CME,Evening relaxation Vn/s rate (hybrid),6.283
+CME,Daily total Vn (hybrid),719346.5
+CME,Daily total Vn (quantum),726282.1
+CME,Daily total Vn (classical),708943.0
+Improvement,Hybrid vs Classical accuracy %,-1.2%
+Improvement,Hybrid vs Classical F1 %,-2.3%
+Improvement,Hybrid variance reduction vs quantum %,-31.1%

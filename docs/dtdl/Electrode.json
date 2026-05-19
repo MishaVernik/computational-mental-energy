@@ -1,0 +1,78 @@
+{
+  "@context": "dtmi:dtdl:context;3",
+  "@id": "dtmi:cme:Electrode;1",
+  "@type": "Interface",
+  "displayName": "Electrode",
+  "description": "Single EEG electrode (one of TP9, AF7, AF8, TP10 for Muse Athena). Reports per-band powers and signal quality.",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "position",
+      "schema": {
+        "@type": "Enum",
+        "valueSchema": "string",
+        "enumValues": [
+          { "name": "TP9", "enumValue": "TP9" },
+          { "name": "AF7", "enumValue": "AF7" },
+          { "name": "AF8", "enumValue": "AF8" },
+          { "name": "TP10", "enumValue": "TP10" }
+        ]
+      }
+    },
+    {
+      "@type": "Telemetry",
+      "name": "delta",
+      "schema": "double",
+      "description": "Delta band power (1-4 Hz), in microV^2."
+    },
+    {
+      "@type": "Telemetry",
+      "name": "theta",
+      "schema": "double",
+      "description": "Theta band power (4-8 Hz), in microV^2."
+    },
+    {
+      "@type": "Telemetry",
+      "name": "alpha",
+      "schema": "double",
+      "description": "Alpha band power (8-13 Hz), in microV^2."
+    },
+    {
+      "@type": "Telemetry",
+      "name": "beta",
+      "schema": "double",
+      "description": "Beta band power (13-30 Hz), in microV^2."
+    },
+    {
+      "@type": "Telemetry",
+      "name": "gamma",
+      "schema": "double",
+      "description": "Gamma band power (30-45 Hz), in microV^2."
+    },
+    {
+      "@type": "Property",
+      "name": "quality",
+      "schema": "double",
+      "description": "Signal quality q(t) in [0,1]."
+    },
+    {
+      "@type": "Property",
+      "name": "contactQuality",
+      "schema": {
+        "@type": "Enum",
+        "valueSchema": "string",
+        "enumValues": [
+          { "name": "good", "enumValue": "good" },
+          { "name": "weak", "enumValue": "weak" },
+          { "name": "none", "enumValue": "none" }
+        ]
+      },
+      "description": "Categorical derived from quality: >=0.8 good, >=0.5 weak, else none."
+    },
+    {
+      "@type": "Property",
+      "name": "lastUpdatedAt",
+      "schema": "dateTime"
+    }
+  ]
+}

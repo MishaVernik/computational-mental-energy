@@ -1,0 +1,38 @@
+{
+  "sampleSize": 200,
+  "totalLabeled": 2000,
+  "flowCount": 267,
+  "nonFlowCount": 1733,
+  "quantum": {
+    "accuracy": 0.48,
+    "f1": 0.1475,
+    "auroc": 0.4512,
+    "tp": 9,
+    "fp": 92,
+    "fn": 12,
+    "tn": 87
+  },
+  "classical": {
+    "accuracy": 1.0,
+    "f1": 1.0,
+    "auroc": 1.0,
+    "tp": 21,
+    "fp": 0,
+    "fn": 0,
+    "tn": 179
+  },
+  "hybrid": {
+    "accuracy": 0.9,
+    "f1": 0.6552,
+    "auroc": 0.9449,
+    "tp": 19,
+    "fp": 18,
+    "fn": 2,
+    "tn": 161
+  },
+  "trainedModel": {
+    "algorithm": "pso",
+    "fitness": 0.68
+  },
+  "ibmSampleSize": 100
+}

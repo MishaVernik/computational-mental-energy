@@ -1,0 +1,30 @@
+# Muse Athena Bridge Configuration
+
+muse:
+  # Muse Athena BLE device address (find via `bleak` scan)
+  # Set to "scan" to auto-discover the first Muse device
+  device_address: "scan"
+  # device_address: "00:55:DA:B0:XX:XX"
+
+osc:
+  # OSC listen port for MindMonitor (7002 avoids Windows reserved ports)
+  port: 7002
+
+hub:
+  # SignalR hub URL (CmeSim.Api) - use localhost when all services run on same machine
+  url: "http://localhost:5000/eeg-stream"
+
+streaming:
+  # Window duration in seconds (patent spec: Delta = 5s)
+  window_seconds: 5.0
+  # EEG sampling rate (Muse Athena = 256 Hz)
+  sample_rate: 256
+  # Default task difficulty (0.0 - 1.0)
+  task_difficulty: 0.5
+
+# Electrode names (Muse Athena layout)
+electrodes:
+  - TP9
+  - AF7
+  - AF8
+  - TP10

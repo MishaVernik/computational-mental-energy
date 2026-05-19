@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: cme-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P YourStrong@Passw0rd -Q 'SELECT 1' -C || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - cme-network
+
+  # Python Quantum Backend
+  qbackend:
+    build:
+      context: ./qbackend
+      dockerfile: Dockerfile
+    container_name: cme-qbackend
+    environment:
+      - QPU_LATENCY_MIN_MS=300
+      - QPU_LATENCY_MAX_MS=2000
+      - DEFAULT_SHOTS=1024
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - cme-network
+
+  # ASP.NET Core Web API
+  api:
+    build:
+      context: .
+      dockerfile: ./CmeSim.Api/Dockerfile
+    container_name: cme-api
+    volumes:
+      - ./data:/app/data:ro
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=CmeSimDb;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;MultipleActiveResultSets=true
+      - QuantumBackend__BaseUrl=http://qbackend:8001
+      - QuantumBackend__TimeoutSeconds=600
+      - PreprocessService__BaseUrl=http://localhost:5000
+      - TrainingWorker__PollingIntervalSeconds=5
+      - TrainingWorker__GenerationsPerJob=10
+      - TrainingWorker__CandidatesPerGeneration=5
+      - TrainingWorker__MaxConcurrentJobs=2
+    ports:
+      - "5000:5000"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      qbackend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/dashboard/summary"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - cme-network
+
+  # React Dashboard (Web UI)
+  dashboard:
+    build:
+      context: ./cme-dashboard
+      dockerfile: Dockerfile
+    container_name: cme-dashboard
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - cme-network
+
+volumes:
+  sqlserver_data:
+    driver: local
+
+networks:
+  cme-network:
+    driver: bridge
+

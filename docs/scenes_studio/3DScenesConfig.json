@@ -1,0 +1,155 @@
+{
+  "$schema": "https://github.com/microsoft/iot-cardboard-js/tree/main/schemas/3DScenesConfiguration/v1.0.0/3DScenesConfiguration.schema.json",
+  "configuration": {
+    "scenes": [
+      {
+        "id": "cme-cognitive-twin-scene",
+        "displayName": "CME Cognitive Twin",
+        "description": "Live head + Muse Athena avatar bound to ADT electrode and session twins.",
+        "assets": [
+          {
+            "type": "3DAsset",
+            "url": "https://<storage-account>.blob.core.windows.net/twin-assets/head_with_muse.glb"
+          }
+        ],
+        "elements": [
+          {
+            "type": "TwinToObjectMapping",
+            "id": "elem-electrode-AF7",
+            "displayName": "Electrode AF7",
+            "primaryTwinID": "electrode-AF7",
+            "objectIDs": ["AF7"]
+          },
+          {
+            "type": "TwinToObjectMapping",
+            "id": "elem-electrode-AF8",
+            "displayName": "Electrode AF8",
+            "primaryTwinID": "electrode-AF8",
+            "objectIDs": ["AF8"]
+          },
+          {
+            "type": "TwinToObjectMapping",
+            "id": "elem-electrode-TP9",
+            "displayName": "Electrode TP9",
+            "primaryTwinID": "electrode-TP9",
+            "objectIDs": ["TP9"]
+          },
+          {
+            "type": "TwinToObjectMapping",
+            "id": "elem-electrode-TP10",
+            "displayName": "Electrode TP10",
+            "primaryTwinID": "electrode-TP10",
+            "objectIDs": ["TP10"]
+          },
+          {
+            "type": "TwinToObjectMapping",
+            "id": "elem-head-flow",
+            "displayName": "Head (pFlow halo)",
+            "primaryTwinID": "user-default",
+            "objectIDs": ["Head"]
+          }
+        ],
+        "behaviorIDs": [
+          "behavior-electrode-engagement",
+          "behavior-electrode-quality",
+          "behavior-head-pflow"
+        ]
+      }
+    ],
+    "behaviors": [
+      {
+        "id": "behavior-electrode-engagement",
+        "displayName": "Electrode engagement (beta + theta)",
+        "datasources": [
+          {
+            "type": "ElementTwinToObjectMappingDataSource",
+            "elementIDs": [
+              "elem-electrode-AF7",
+              "elem-electrode-AF8",
+              "elem-electrode-TP9",
+              "elem-electrode-TP10"
+            ]
+          }
+        ],
+        "visuals": [
+          {
+            "type": "StatusColoring",
+            "statusValueExpression": "PrimaryTwin.beta + PrimaryTwin.theta",
+            "valueRanges": [
+              { "id": "vr-low",  "values": [0, 30],   "visual": { "color": "#3366cc" } },
+              { "id": "vr-med",  "values": [30, 80],  "visual": { "color": "#dccc44" } },
+              { "id": "vr-high", "values": [80, 9999],"visual": { "color": "#cc3344" } }
+            ]
+          },
+          {
+            "type": "Badge",
+            "iconName": "ChartPie",
+            "color": { "type": "StaticColor", "color": "#ffffff" },
+            "label": "beta=${PrimaryTwin.beta:0.2f}, theta=${PrimaryTwin.theta:0.2f}, alpha=${PrimaryTwin.alpha:0.2f}"
+          }
+        ]
+      },
+      {
+        "id": "behavior-electrode-quality",
+        "displayName": "Electrode poor contact alert",
+        "datasources": [
+          {
+            "type": "ElementTwinToObjectMappingDataSource",
+            "elementIDs": [
+              "elem-electrode-AF7",
+              "elem-electrode-AF8",
+              "elem-electrode-TP9",
+              "elem-electrode-TP10"
+            ]
+          }
+        ],
+        "twinAliases": [],
+        "visuals": [
+          {
+            "type": "Popover",
+            "title": "Signal quality alert",
+            "widgets": [
+              {
+                "type": "Value",
+                "valueExpression": "PrimaryTwin.quality",
+                "widgetConfiguration": {
+                  "displayName": "Quality q(t)",
+                  "type": "double",
+                  "unitOfMeasure": ""
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "behavior-head-pflow",
+        "displayName": "Flow halo on head (pFlow)",
+        "datasources": [
+          {
+            "type": "ElementTwinToObjectMappingDataSource",
+            "elementIDs": ["elem-head-flow"]
+          }
+        ],
+        "visuals": [
+          {
+            "type": "StatusColoring",
+            "statusValueExpression": "PrimaryTwin.currentPFlow",
+            "valueRanges": [
+              { "id": "pf-no",   "values": [0, 0.5],   "visual": { "color": "#445566" } },
+              { "id": "pf-mid",  "values": [0.5, 0.7], "visual": { "color": "#aaaa55" } },
+              { "id": "pf-yes",  "values": [0.7, 1.01],"visual": { "color": "#44cc66" } }
+            ]
+          },
+          {
+            "type": "Badge",
+            "iconName": "Brain",
+            "color": { "type": "StaticColor", "color": "#ffffff" },
+            "label": "pFlow=${PrimaryTwin.currentPFlow:0.3f}, CME rate=${PrimaryTwin.currentCmeRateVnPerSec:0.2f} Vn/s"
+          }
+        ]
+      }
+    ],
+    "layers": []
+  }
+}

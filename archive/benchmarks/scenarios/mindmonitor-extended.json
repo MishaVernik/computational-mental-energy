@@ -1,0 +1,85 @@
+{
+  "scenarios": [
+    {
+      "name": "Monolith - Burst (More Clients, Shots)",
+      "architecture": "A_Monolith",
+      "activeClients": 40,
+      "requestsPerClient": 20,
+      "workersCount": 4,
+      "maxConcurrentQpuCalls": 2,
+      "thinkTimeMs": 10,
+      "qpuBackends": 1,
+      "shots": 512,
+      "circuitDepth": 4,
+      "trainingEnabled": false,
+      "networkProfile": { "meanMs": 5.0, "stdMs": 2.0 },
+      "dbProfile": { "meanMs": 10.0, "stdMs": 3.0 },
+      "brokerProfile": { "meanMs": 2.0, "stdMs": 1.0, "mode": "Exponential" }
+    },
+    {
+      "name": "Monolith - Dual QPUs High Shots",
+      "architecture": "A_Monolith",
+      "activeClients": 12,
+      "requestsPerClient": 40,
+      "workersCount": 2,
+      "maxConcurrentQpuCalls": 2,
+      "thinkTimeMs": 50,
+      "qpuBackends": 2,
+      "shots": 2048,
+      "circuitDepth": 6,
+      "trainingEnabled": false,
+      "networkProfile": { "meanMs": 5.0, "stdMs": 2.0 },
+      "dbProfile": { "meanMs": 10.0, "stdMs": 3.0 },
+      "brokerProfile": { "meanMs": 2.0, "stdMs": 1.0, "mode": "Exponential" }
+    },
+    {
+      "name": "Sync Microservices - High Requests",
+      "architecture": "B_SyncMicroservices",
+      "activeClients": 25,
+      "requestsPerClient": 80,
+      "workersCount": 4,
+      "maxConcurrentQpuCalls": 4,
+      "thinkTimeMs": 25,
+      "qpuBackends": 2,
+      "shots": 1024,
+      "circuitDepth": 5,
+      "trainingEnabled": false,
+      "networkProfile": { "meanMs": 5.0, "stdMs": 2.0 },
+      "dbProfile": { "meanMs": 10.0, "stdMs": 3.0 },
+      "brokerProfile": { "meanMs": 2.0, "stdMs": 1.0, "mode": "Exponential" }
+    },
+    {
+      "name": "Brokered - Wide Workers",
+      "architecture": "C_Brokered",
+      "activeClients": 30,
+      "requestsPerClient": 60,
+      "workersCount": 16,
+      "maxConcurrentQpuCalls": 8,
+      "thinkTimeMs": 20,
+      "qpuBackends": 2,
+      "shots": 512,
+      "circuitDepth": 4,
+      "trainingEnabled": false,
+      "networkProfile": { "meanMs": 5.0, "stdMs": 2.0 },
+      "dbProfile": { "meanMs": 10.0, "stdMs": 3.0 },
+      "brokerProfile": { "meanMs": 2.0, "stdMs": 1.0, "mode": "Exponential" }
+    },
+    {
+      "name": "Brokered - Heavy Shots",
+      "architecture": "C_Brokered",
+      "activeClients": 12,
+      "requestsPerClient": 40,
+      "workersCount": 8,
+      "maxConcurrentQpuCalls": 4,
+      "thinkTimeMs": 30,
+      "qpuBackends": 1,
+      "shots": 4096,
+      "circuitDepth": 6,
+      "trainingEnabled": false,
+      "networkProfile": { "meanMs": 5.0, "stdMs": 2.0 },
+      "dbProfile": { "meanMs": 10.0, "stdMs": 3.0 },
+      "brokerProfile": { "meanMs": 2.0, "stdMs": 1.0, "mode": "Exponential" }
+    }
+  ]
+}
+

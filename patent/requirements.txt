@@ -1,0 +1,2 @@
+# For patent figure generation (python patent/generate_figures.py)
+plantuml>=1.0.0

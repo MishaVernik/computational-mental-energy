@@ -1,0 +1,46 @@
+@startuml fig4_spectral_features
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+
+
+|Спектральні ознаки (150)|
+start
+:Матриця P_band(ch, t)
+4 електроди x 5 діапазонів
+(delta, theta, alpha, beta, gamma);
+note right: TP9, AF7, AF8, TP10
+
+|Формування вектора (160)|
+:Повний вектор x_t in R^22
+20 спектральних + c(t) + q(t)
+Зведений x_t^(q) in R^8;
+
+|Нормалізація (140)|
+:f_norm = 2*(f - f_min)/(f_max - f_min) - 1
+x_t^(q) in [-1, 1];
+
+|Квантова схема (170)|
+:Підшар A: Двоканальне кодування
+R_y((x_i+1)*pi), R_z((x_{i+4}+1)*pi);
+
+:Підшар B: ZZ-взаємодія ознак
+RZZ((x_i - x_j)^2 * pi);
+
+:Підшар C: Кільцеве заплутування
+CNOT(q_i, q_{(i+1) mod 4});
+
+:Підшар D: Варіаційний анзац
+R_y(theta_i), R_z(phi_i);
+
+note right: Повторення L+1 разів\n(data re-uploading)
+
+:Вимірювання S shots
+p_flow(t) = count(b_0=1) / S;
+
+|Модуль CME (180)|
+:CME_rate(t) = kappa * E_band(t) * g(c,p)
+CME(t) = CME_rate(t) * Delta;
+
+@enduml

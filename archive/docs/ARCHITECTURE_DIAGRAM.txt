@@ -1,0 +1,238 @@
+═══════════════════════════════════════════════════════════════════════════════
+  CME SIMULATION SYSTEM - ARCHITECTURE DIAGRAM
+═══════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         SIMULATION CLIENT (Node.js)                         │
+│                                                                             │
+│  TypeScript CLI Application                                                │
+│  ┌─────────────────┐   ┌──────────────────┐   ┌──────────────────┐       │
+│  │ Load Generator  │   │ Metrics Collector│   │ Results Reporter │       │
+│  │ - Online reqs   │   │ - Latency        │   │ - Avg, P95, P99  │       │
+│  │ - Training jobs │   │ - Throughput     │   │ - Success rate   │       │
+│  └─────────────────┘   └──────────────────┘   └──────────────────┘       │
+│           │                                                                 │
+└───────────┼─────────────────────────────────────────────────────────────────┘
+            │ HTTP (axios)
+            │
+            ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      ASP.NET CORE WEB API (.NET 8)                          │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │                         CONTROLLERS                                 │   │
+│  │  ┌──────────────┐  ┌──────────────┐  ┌───────────────┐           │   │
+│  │  │ Inference    │  │  Training    │  │  Dashboard    │           │   │
+│  │  │              │  │              │  │               │           │   │
+│  │  │ POST /api/   │  │ POST /api/   │  │ GET /api/     │           │   │
+│  │  │ inference/   │  │ training/    │  │ dashboard/    │           │   │
+│  │  │ cme          │  │ start        │  │ summary       │           │   │
+│  │  └──────┬───────┘  └──────┬───────┘  └───────┬───────┘           │   │
+│  └─────────┼─────────────────┼──────────────────┼────────────────────┘   │
+│            │                 │                  │                         │
+│  ┌─────────▼─────────────────▼──────────────────▼────────────────────┐   │
+│  │                         SERVICES                                   │   │
+│  │  ┌──────────────────┐  ┌──────────────┐  ┌──────────────────┐   │   │
+│  │  │ QuantumBackend   │  │ CmeCalculator│  │ TrainingWorker   │   │   │
+│  │  │ HttpClient       │  │              │  │ Service          │   │   │
+│  │  │ - InferAsync()   │  │ - ComputeCme│  │ (Background)     │   │   │
+│  │  └────────┬─────────┘  └──────────────┘  └────────┬─────────┘   │   │
+│  └───────────┼─────────────────────────────────────────┼─────────────┘   │
+│              │                                          │                 │
+│              │ HTTP                        ┌────────────▼────────┐        │
+│              │                             │    DbContext        │        │
+│              │                             │    (EF Core)        │        │
+│              │                             └────────┬────────────┘        │
+└──────────────┼──────────────────────────────────────┼──────────────────────┘
+               │                                      │ SQL
+               │                                      ▼
+               │                            ┌──────────────────────┐
+               │                            │   SQL SERVER 2022    │
+               │                            │                      │
+               │                            │  ┌────────────────┐  │
+               │                            │  │   Sessions     │  │
+               │                            │  ├────────────────┤  │
+               │                            │  │ InferenceReq.  │  │
+               │                            │  ├────────────────┤  │
+               │                            │  │ CmeResults     │  │
+               │                            │  ├────────────────┤  │
+               │                            │  │ TrainingJobs   │  │
+               │                            │  └────────────────┘  │
+               │                            └──────────────────────┘
+               │
+               ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               PYTHON QUANTUM BACKEND SERVICE (FastAPI)                      │
+│                                                                             │
+│  ┌────────────────────────────────────────────────────────────────────┐   │
+│  │                    FASTAPI APPLICATION                             │   │
+│  │  ┌────────────────┐    ┌────────────────┐    ┌────────────────┐  │   │
+│  │  │ POST /qpu/infer│    │  GET /health   │    │  GET /stats    │  │   │
+│  │  └────────┬───────┘    └────────────────┘    └────────────────┘  │   │
+│  └───────────┼─────────────────────────────────────────────────────────┘   │
+│              │                                                             │
+│  ┌───────────▼─────────────────────────────────────────────────────────┐  │
+│  │              QUANTUM INFERENCE ENGINE (Qiskit)                      │  │
+│  │                                                                     │  │
+│  │  1. Build Circuit:                                                 │  │
+│  │     ┌──────────────────────────────────────────┐                  │  │
+│  │     │  Qubit 0: ──Ry(θ₀)──●──────────Ry──Rz──M │                  │  │
+│  │     │  Qubit 1: ──Ry(θ₁)──X──●───────Ry──Rz──M │                  │  │
+│  │     │  Qubit 2: ──Ry(θ₂)─────X──●────Ry──Rz──M │                  │  │
+│  │     │  Qubit 3: ──Ry(θ₃)────────X──●──Ry──Rz──M │                  │  │
+│  │     │              ▲                 │           │                  │  │
+│  │     │          Feature            Final          │                  │  │
+│  │     │          Encoding         Entangling       │                  │  │
+│  │     └──────────────────────────────────────────────┘                  │  │
+│  │                                                                     │  │
+│  │  2. Simulate QPU Delay: sleep(random(300ms, 2000ms))              │  │
+│  │                                                                     │  │
+│  │  3. Execute on Qiskit Aer: 1024 shots                             │  │
+│  │                                                                     │  │
+│  │  4. Extract p_flow: P(qubit_0 = |1>)                              │  │
+│  │                                                                     │  │
+│  │  5. Return: {pFlow, shotsUsed, depth, qpuLatencyMs}              │  │
+│  └─────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+  REQUEST FLOWS
+═══════════════════════════════════════════════════════════════════════════════
+
+ONLINE INFERENCE (Latency-Critical)
+────────────────────────────────────
+Time: 1-3 seconds per request
+
+  Client
+    │
+    │ POST /api/inference/cme
+    │ {sessionId, windowId, features[], taskDifficulty}
+    ▼
+  InferenceController
+    │
+    ├─► [1] Call Quantum Backend
+    │        │
+    │        │ POST /qpu/infer {features}
+    │        ▼
+    │      Python Service
+    │        │ - Build circuit
+    │        │ - Sleep 300-2000ms (simulate QPU)
+    │        │ - Execute on Aer
+    │        │ - Extract p_flow
+    │        ▼
+    │      {pFlow: 0.623, shotsUsed: 1024, depth: 8, qpuLatencyMs: 1456}
+    │
+    ├─► [2] Compute CME
+    │        │
+    │        │ CME = k × Energy(features) × g(difficulty, p_flow)
+    │        ▼
+    │      {cme: 45.23}
+    │
+    ├─► [3] Store in Database
+    │        │
+    │        │ INSERT InferenceRequestLog (latency metrics)
+    │        │ INSERT CmeWindowResult (CME, p_flow, shots, depth)
+    │        ▼
+    │      Persisted
+    │
+    ▼
+  Response
+    {cme: 45.23, pFlow: 0.623, shotsUsed: 1024, depth: 8,
+     qpuLatencyMs: 1456, totalLatencyMs: 1523}
+
+
+TRAINING JOB (Long-Running Background)
+───────────────────────────────────────
+Time: 30-120 seconds per job
+
+  Client
+    │
+    │ POST /api/training/start
+    ▼
+  TrainingController
+    │ - Create TrainingJob record
+    │ - Set status = Queued
+    │ - INSERT into SQL Server
+    ▼
+  Response: {jobId: "abc-123", status: "Queued"}
+
+  ┌──────────────────────────────────────────┐
+  │  BACKGROUND WORKER (Continuous Loop)     │
+  │                                          │
+  │  Every 5 seconds:                        │
+  │    1. Query: SELECT * FROM TrainingJobs  │
+  │              WHERE status = 'Queued'     │
+  │                                          │
+  │    2. If job found:                      │
+  │       - UPDATE status = 'Running'        │
+  │       - For gen = 1 to 10:              │
+  │           - For candidate = 1 to 5:     │
+  │               - Generate random features │
+  │               - Call Quantum Backend     │
+  │               - Compute fitness          │
+  │           - Sleep 50-100ms (CPU work)   │
+  │           - UPDATE CompletedGenerations  │
+  │       - UPDATE status = 'Completed'      │
+  │       - UPDATE BestFitness, TotalQpuCalls│
+  │                                          │
+  └──────────────────────────────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+  DEPLOYMENT (Docker Compose)
+═══════════════════════════════════════════════════════════════════════════════
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│                          Docker Network: cme-network                      │
+│                                                                           │
+│  ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐    │
+│  │  sqlserver       │   │  qbackend        │   │  api             │    │
+│  │  (SQL Server)    │   │  (Python)        │   │  (ASP.NET Core)  │    │
+│  │                  │   │                  │   │                  │    │
+│  │  Port: 1433      │◄──│  Port: 8001      │◄──│  Port: 5000      │    │
+│  │  Volume: data    │   │  Health: /health │   │  Health: /api/   │    │
+│  └──────────────────┘   └──────────────────┘   │  dashboard       │    │
+│                                                 └──────────────────┘    │
+│                                                           ▲              │
+└───────────────────────────────────────────────────────────┼──────────────┘
+                                                            │
+                                                            │ HTTP
+                                                            │
+                                                  ┌─────────┴────────┐
+                                                  │   Host Machine   │
+                                                  │                  │
+                                                  │  cme-sim-client  │
+                                                  │  (npm run)       │
+                                                  └──────────────────┘
+
+═══════════════════════════════════════════════════════════════════════════════
+  PERFORMANCE CHARACTERISTICS
+═══════════════════════════════════════════════════════════════════════════════
+
+Latency Breakdown (Online Inference):
+  • Network (client ↔ API):        ~10-50ms
+  • API processing:                 ~5-10ms
+  • Quantum Backend (bottleneck):   300-2000ms  ◄── Configurable
+  • CME calculation:                ~1ms
+  • Database write:                 ~5-10ms
+  ─────────────────────────────────────────────
+  • Total:                          ~1200-2100ms (typical)
+
+Throughput Limits:
+  • Single QPU: ~0.5-3 req/s (depends on latency)
+  • With training jobs: ~0.3-1 req/s (QPU contention)
+
+Queue Behavior:
+  • Online requests: Direct (no explicit queue)
+  • Training jobs: Database-backed queue
+  • Contention point: Quantum Backend (serialized)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+Legend:
+  ─── : Sequential flow
+  ──► : Dependency/call
+  ◄── : Connection
+  ▼   : Downward flow
+  │   : Vertical connection
+
+

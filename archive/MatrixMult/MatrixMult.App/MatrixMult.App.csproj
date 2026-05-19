@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MatrixMult.Core\MatrixMult.Core.csproj" />
+    <ProjectReference Include="..\MatrixMult.Algorithms\MatrixMult.Algorithms.csproj" />
+    <ProjectReference Include="..\MatrixMult.Bench\MatrixMult.Bench.csproj" />
+  </ItemGroup>
+
+</Project>

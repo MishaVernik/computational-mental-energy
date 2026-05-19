@@ -1,0 +1,56 @@
+@startuml fig3_metaheuristic_loop
+!theme plain
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 10
+skinparam activityBackgroundColor #E8EEF4
+skinparam activityBorderColor #2C3E50
+
+start
+
+:Створення завдання навчання
+(GA / PSO / ACO / SA);
+
+:Ініціалізація популяції
+N = 5 кандидатів
+Theta_i in [0, 2*pi]^24;
+
+:k = 1, g = 1;
+
+while (Покоління g <= G?) is (так)
+
+  while (Кандидат k <= N?) is (так)
+
+    :Обирається batch вікон
+    із валідаційного набору;
+
+    :Виклик QPU з параметрами кандидата
+    (x_t^(q), Theta_k, S shots);
+
+    :Обчислення фітнесу
+    fitness_k = L_val(Theta_k)
+    (крос-ентропія / F1-score);
+
+    :Порівняння з найкращим:
+    якщо fitness_k > best,
+    оновити best_fitness, best_params;
+
+    :k = k + 1;
+
+  endwhile (ні)
+
+  :Еволюція популяції
+  (а) Відбір 50%
+  (б) Кросовер (uniform)
+  (в) Мутація (p_mut за алгоритмом);
+
+  :g = g + 1, k = 1;
+
+endwhile (ні)
+
+:Навчання завершено
+Зберегти Theta* -> ActiveModel;
+
+stop
+
+@enduml

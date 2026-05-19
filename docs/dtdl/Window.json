@@ -1,0 +1,84 @@
+{
+  "@context": "dtmi:dtdl:context;3",
+  "@id": "dtmi:cme:Window;1",
+  "@type": "Interface",
+  "displayName": "Window",
+  "description": "Fixed-duration EEG window (typically Delta = 5 s) with its CME and pFlow estimates.",
+  "contents": [
+    {
+      "@type": "Property",
+      "name": "windowId",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "windowStartAt",
+      "schema": "dateTime"
+    },
+    {
+      "@type": "Property",
+      "name": "durationSec",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "pFlowHybrid",
+      "schema": "double",
+      "description": "Hybrid fusion flow probability in [0,1]."
+    },
+    {
+      "@type": "Property",
+      "name": "pFlowQuantum",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "pFlowClassical",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "cmeVn",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "cmeRateVnPerSec",
+      "schema": "double"
+    },
+    {
+      "@type": "Property",
+      "name": "isFlow",
+      "schema": "boolean"
+    },
+    {
+      "@type": "Property",
+      "name": "windowClass",
+      "schema": {
+        "@type": "Enum",
+        "valueSchema": "string",
+        "enumValues": [
+          { "name": "clean", "enumValue": "clean" },
+          { "name": "artifact", "enumValue": "artifact" },
+          { "name": "rejected", "enumValue": "rejected" },
+          { "name": "calibrating", "enumValue": "calibrating" }
+        ]
+      }
+    },
+    {
+      "@type": "Property",
+      "name": "inferenceMode",
+      "schema": "string"
+    },
+    {
+      "@type": "Property",
+      "name": "shotsUsed",
+      "schema": "integer"
+    },
+    {
+      "@type": "Property",
+      "name": "qpuLatencyMs",
+      "schema": "double"
+    }
+  ]
+}
