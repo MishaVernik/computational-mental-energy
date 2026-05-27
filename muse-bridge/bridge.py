@@ -144,6 +144,7 @@ class MindMonitorOSC:
         self._horseshoe = [1, 1, 1, 1]   # 1=Good, 2=OK, 3=Bad
         self._is_good = [1, 1, 1, 1]     # binary per-channel
         self._touching = False
+        self._battery: Optional[float] = None  # [0,1] from /muse/batt
 
     async def connect(self):
         from pythonosc import dispatcher, osc_server
@@ -161,6 +162,7 @@ class MindMonitorOSC:
         disp.map("/muse/elements/horseshoe", self._on_horseshoe)
         disp.map("/muse/elements/is_good", self._on_is_good)
         disp.map("/muse/elements/touching_forehead", self._on_touching)
+        disp.map("/muse/batt", self._on_battery)
 
         self._server = osc_server.ThreadingOSCUDPServer(
             ("0.0.0.0", self.osc_port), disp, bind_and_activate=False
@@ -251,6 +253,29 @@ class MindMonitorOSC:
             val = val[0] if val else 0
         with self._lock:
             self._touching = bool(int(val))
+
+    def _on_battery(self, address, *args):
+        """MindMonitor /muse/batt: per-doc 4 ints (charge%/4200/?/?). Normalize to [0,1]."""
+        raw = []
+        for a in args:
+            if isinstance(a, (int, float)):
+                raw.append(float(a))
+            elif isinstance(a, (list, tuple)):
+                raw.extend(float(v) for v in a)
+        if not raw:
+            return
+        v = raw[0]
+        # Heuristic: 0..1 already normalized, 0..100 percent, 0..10000 (Muse millivolts*100), else millivolts
+        if v <= 1.0:
+            level = max(0.0, min(1.0, v))
+        elif v <= 100.0:
+            level = v / 100.0
+        elif v <= 10000.0:
+            level = max(0.0, min(1.0, v / 10000.0))
+        else:
+            level = max(0.0, min(1.0, v / 4200.0))
+        with self._lock:
+            self._battery = level
 
     # ── Per-channel quality assessment ────────────────────────────
 
@@ -349,6 +374,7 @@ class MindMonitorOSC:
 
             horseshoe = list(self._horseshoe)
             touching = self._touching
+            battery = self._battery
 
         ch_quality = {}
         for ch_idx, electrode in enumerate(ELECTRODE_NAMES):
@@ -362,7 +388,7 @@ class MindMonitorOSC:
         if bad:
             logger.debug(f"Bad contact: {bad} (horseshoe={horseshoe})")
 
-        return channels, ch_quality, overall_quality, touching, source_mode
+        return channels, ch_quality, overall_quality, touching, source_mode, battery
 
     @property
     def is_connected(self):
@@ -406,7 +432,7 @@ class SimulatedMuse:
                 'gamma': 0.04 + 0.03 * np.random.random(),
             }
         ch_quality = {name: 1.0 for name in ELECTRODE_NAMES}
-        return channels, ch_quality, 0.95, True, "simulated"
+        return channels, ch_quality, 0.95, True, "simulated", 0.85
 
     @property
     def is_connected(self):
@@ -555,7 +581,7 @@ async def main():
             if result is None:
                 continue
 
-            channels, ch_quality, quality, touching, source_mode = result
+            channels, ch_quality, quality, touching, source_mode, battery = result
 
             if not touching and not args.simulate:
                 logger.debug("Headband not on forehead, skipping window")
@@ -563,6 +589,7 @@ async def main():
 
             window_count += 1
 
+            sim_mode = args.simulate
             payload = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "channels": channels,
@@ -570,8 +597,11 @@ async def main():
                 "quality": float(quality),
                 "taskDifficulty": difficulty,
                 "touching": touching,
-                "sourceMode": source_mode,
+                "sourceMode": "simulator" if sim_mode else "live",
+                "bandsSource": source_mode,
             }
+            if battery is not None:
+                payload["batteryLevel"] = float(battery)
 
             try:
                 await hub.send_eeg_window(payload)

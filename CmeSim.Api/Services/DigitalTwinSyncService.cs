@@ -264,13 +264,10 @@ public sealed class DigitalTwinSyncService : IDigitalTwinSyncService, IAsyncDisp
         if (cme.FatigueLevel.HasValue)        userProps["fatigueLevel"]        = cme.FatigueLevel.Value;
         if (!string.IsNullOrEmpty(_activeActivity))     userProps["currentActivitySlug"] = _activeActivity;
         if (!string.IsNullOrEmpty(cme.CurrentSessionId)) userProps["currentSessionId"]    = cme.CurrentSessionId;
+        userProps["currentPFlow"]            = cme.PFlow;
+        userProps["currentCmeRateVnPerSec"]  = cme.CmeVn / Math.Max(1.0, cme.TotalWindows == 0 ? 1.0 : 5.0);
 
-        await UpdateThrottledAsync(_opts.UserTwinId, "dtmi:cme:User;1", userProps,
-            telemetry: new Dictionary<string, object>
-            {
-                ["currentPFlow"] = cme.PFlow,
-                ["currentCmeRateVnPerSec"] = cme.CmeVn / Math.Max(1.0, cme.TotalWindows == 0 ? 1.0 : 5.0)
-            });
+        await UpdateThrottledAsync(_opts.UserTwinId, "dtmi:cme:User;1", userProps);
 
         if (_activeSessionTwinId != null)
         {
@@ -328,6 +325,10 @@ public sealed class DigitalTwinSyncService : IDigitalTwinSyncService, IAsyncDisp
             ["dropoutCountLastHour"] = dropouts,
             ["lastSignalQualityMean"] = rollingQuality
         };
+        if (eeg.BatteryLevel.HasValue)
+        {
+            props["batteryLevel"] = eeg.BatteryLevel.Value;
+        }
         await UpdateThrottledAsync(_opts.HeadbandTwinId, "dtmi:cme:Headband;1", props);
     }
 
@@ -344,14 +345,11 @@ public sealed class DigitalTwinSyncService : IDigitalTwinSyncService, IAsyncDisp
             {
                 ["quality"] = quality,
                 ["contactQuality"] = contactQuality,
-                ["lastUpdatedAt"] = eeg.Timestamp
-            };
-            var telem = new Dictionary<string, object>
-            {
+                ["lastUpdatedAt"] = eeg.Timestamp,
                 ["delta"] = bp.Delta, ["theta"] = bp.Theta, ["alpha"] = bp.Alpha,
                 ["beta"]  = bp.Beta,  ["gamma"] = bp.Gamma
             };
-            await UpdateThrottledAsync(twinId, "dtmi:cme:Electrode;1", props, telemetry: telem);
+            await UpdateThrottledAsync(twinId, "dtmi:cme:Electrode;1", props);
         }
     }
 

@@ -807,6 +807,7 @@ public class EegWindowDto
     public double TaskDifficulty { get; set; } = 0.5;
     public bool Touching { get; set; } = true;
     public string? SourceMode { get; set; }
+    public double? BatteryLevel { get; set; }
 }
 
 public class BandPowersDto

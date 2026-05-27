@@ -87,13 +87,13 @@
       "schema": "string"
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "currentPFlow",
       "schema": "double",
       "description": "Latest hybrid flow probability in [0,1]."
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "currentCmeRateVnPerSec",
       "schema": "double"
     },

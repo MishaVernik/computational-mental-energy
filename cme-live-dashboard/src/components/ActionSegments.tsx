@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = window.location.hostname === 'localhost'
-  ? 'http://localhost:5000'
-  : `http://${window.location.hostname}:5000`;
+import { getApiBase } from '../runtimeApi';
+
+const API_BASE = getApiBase();
 
 interface Segment {
   id: string;

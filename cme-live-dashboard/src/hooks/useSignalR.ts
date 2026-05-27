@@ -5,9 +5,9 @@ import type {
   ActiveAction, ActionStarted, ActionStopped
 } from '../types';
 
-const HUB_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:5000/eeg-stream'
-  : `http://${window.location.hostname}:5000/eeg-stream`;
+import { getHubUrl } from '../runtimeApi';
+
+const HUB_URL = getHubUrl();
 const MAX_HISTORY = 300;
 
 export function useSignalR() {

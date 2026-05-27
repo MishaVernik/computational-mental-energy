@@ -57,3 +57,7 @@ docker-compose.override.yml
 logs/
 *.log
 
+# VPS deploy (Install-VpsServices.ps1)
+scripts/.env.vps
+publish/
+

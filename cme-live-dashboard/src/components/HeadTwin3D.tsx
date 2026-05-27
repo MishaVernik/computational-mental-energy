@@ -138,15 +138,16 @@ function Head() {
         <cylinderGeometry args={[0.32, 0.40, 0.45, 24]} />
         <meshStandardMaterial color="#c8a47a" roughness={0.8} metalness={0.05} />
       </mesh>
-      {/* Muse Athena headband: torus around the cranium, tilted so it sits high
-          on the forehead and lower behind the head (matches the real device). */}
-      <group position={[0, 0.45, -0.05]} rotation={[Math.PI / 2 - 0.18, 0, 0]}>
+      {/* Muse Athena headband: torus around the forehead. THREE.TorusGeometry lives in
+          the XY plane (axis along +Z), so we rotate by π/2 about X to lay it flat in
+          the XZ plane (horizontal), then subtract a small forward tilt (~6°). */}
+      <group position={[0, 0.38, -0.04]} rotation={[Math.PI / 2 - 0.10, 0, 0]}>
         <mesh>
-          <torusGeometry args={[0.92, 0.04, 16, 96]} />
+          <torusGeometry args={[0.92, 0.035, 16, 96]} />
           <meshStandardMaterial color="#101015" metalness={0.55} roughness={0.4} />
         </mesh>
-        {/* Tiny Muse logo bump on the front center of the band */}
-        <mesh position={[0, 0, 0.96]} scale={[0.1, 0.06, 0.04]}>
+        {/* Tiny Muse logo bump on the front center of the band (rotated so it sticks straight forward) */}
+        <mesh position={[0, 0, 0.92]} scale={[0.1, 0.05, 0.035]}>
           <boxGeometry args={[1, 1, 1]} />
           <meshStandardMaterial color="#64B5F6" emissive="#64B5F6" emissiveIntensity={0.4} />
         </mesh>

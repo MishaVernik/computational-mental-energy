@@ -72,9 +72,10 @@
       "description": "Rolling 60s mean of min(channelQuality) in [0,1]."
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "batteryLevel",
-      "schema": "double"
+      "schema": "double",
+      "description": "Latest battery level in [0,1] reported by MindMonitor /muse/batt."
     },
     {
       "@type": "Relationship",

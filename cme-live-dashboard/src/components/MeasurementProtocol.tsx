@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import type { ActiveAction } from '../types';
 
-const API_BASE = window.location.hostname === 'localhost'
-  ? 'http://localhost:5000'
-  : `http://${window.location.hostname}:5000`;
+import { getApiBase } from '../runtimeApi';
+
+const API_BASE = getApiBase();
 
 const audioCtxRef: { current: AudioContext | null } = { current: null };
 function getAudioCtx() {

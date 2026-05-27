@@ -13,139 +13,181 @@
           }
         ],
         "elements": [
-          {
-            "type": "TwinToObjectMapping",
-            "id": "elem-electrode-AF7",
-            "displayName": "Electrode AF7",
-            "primaryTwinID": "electrode-AF7",
-            "objectIDs": ["AF7"]
-          },
-          {
-            "type": "TwinToObjectMapping",
-            "id": "elem-electrode-AF8",
-            "displayName": "Electrode AF8",
-            "primaryTwinID": "electrode-AF8",
-            "objectIDs": ["AF8"]
-          },
-          {
-            "type": "TwinToObjectMapping",
-            "id": "elem-electrode-TP9",
-            "displayName": "Electrode TP9",
-            "primaryTwinID": "electrode-TP9",
-            "objectIDs": ["TP9"]
-          },
-          {
-            "type": "TwinToObjectMapping",
-            "id": "elem-electrode-TP10",
-            "displayName": "Electrode TP10",
-            "primaryTwinID": "electrode-TP10",
-            "objectIDs": ["TP10"]
-          },
-          {
-            "type": "TwinToObjectMapping",
-            "id": "elem-head-flow",
-            "displayName": "Head (pFlow halo)",
-            "primaryTwinID": "user-default",
-            "objectIDs": ["Head"]
-          }
+          { "type": "TwinToObjectMapping", "id": "elem-electrode-AF7",  "displayName": "electrode-AF7",  "primaryTwinID": "electrode-AF7",  "objectIDs": ["AF7"]  },
+          { "type": "TwinToObjectMapping", "id": "elem-electrode-AF8",  "displayName": "electrode-AF8",  "primaryTwinID": "electrode-AF8",  "objectIDs": ["AF8"]  },
+          { "type": "TwinToObjectMapping", "id": "elem-electrode-TP9",  "displayName": "electrode-TP9",  "primaryTwinID": "electrode-TP9",  "objectIDs": ["TP9"]  },
+          { "type": "TwinToObjectMapping", "id": "elem-electrode-TP10", "displayName": "electrode-TP10", "primaryTwinID": "electrode-TP10", "objectIDs": ["TP10"] },
+          { "type": "TwinToObjectMapping", "id": "elem-headband",       "displayName": "headband-default","primaryTwinID": "headband-default","objectIDs": ["MuseHeadband"] },
+          { "type": "TwinToObjectMapping", "id": "elem-user",           "displayName": "user-default",   "primaryTwinID": "user-default",   "objectIDs": ["Head"] }
         ],
         "behaviorIDs": [
           "behavior-electrode-engagement",
-          "behavior-electrode-quality",
-          "behavior-head-pflow"
+          "behavior-head-pflow",
+          "behavior-headband-status"
         ]
       }
     ],
     "behaviors": [
       {
         "id": "behavior-electrode-engagement",
-        "displayName": "Electrode engagement (beta + theta)",
+        "displayName": "Electrode live state",
         "datasources": [
           {
             "type": "ElementTwinToObjectMappingDataSource",
-            "elementIDs": [
-              "elem-electrode-AF7",
-              "elem-electrode-AF8",
-              "elem-electrode-TP9",
-              "elem-electrode-TP10"
-            ]
+            "elementIDs": ["elem-electrode-AF7", "elem-electrode-AF8", "elem-electrode-TP9", "elem-electrode-TP10"]
           }
         ],
         "visuals": [
           {
-            "type": "StatusColoring",
-            "statusValueExpression": "PrimaryTwin.beta + PrimaryTwin.theta",
+            "type": "ExpressionRangeVisual",
+            "expressionType": "NumericRange",
+            "valueExpression": "PrimaryTwin.beta + PrimaryTwin.theta",
+            "displayName": "Engagement coloring",
             "valueRanges": [
-              { "id": "vr-low",  "values": [0, 30],   "visual": { "color": "#3366cc" } },
-              { "id": "vr-med",  "values": [30, 80],  "visual": { "color": "#dccc44" } },
-              { "id": "vr-high", "values": [80, 9999],"visual": { "color": "#cc3344" } }
-            ]
+              { "id": "vr-eng-low",  "values": [0, 30],          "visual": { "color": "#3366cc", "labelExpression": "Calm" } },
+              { "id": "vr-eng-med",  "values": [30, 80],         "visual": { "color": "#dccc44", "labelExpression": "Engaged" } },
+              { "id": "vr-eng-high", "values": [80, "Infinity"], "visual": { "color": "#cc3344", "labelExpression": "High load" } }
+            ],
+            "objectIDs": { "expression": "objectIDs" }
           },
           {
-            "type": "Badge",
-            "iconName": "ChartPie",
-            "color": { "type": "StaticColor", "color": "#ffffff" },
-            "label": "beta=${PrimaryTwin.beta:0.2f}, theta=${PrimaryTwin.theta:0.2f}, alpha=${PrimaryTwin.alpha:0.2f}"
-          }
-        ]
-      },
-      {
-        "id": "behavior-electrode-quality",
-        "displayName": "Electrode poor contact alert",
-        "datasources": [
-          {
-            "type": "ElementTwinToObjectMappingDataSource",
-            "elementIDs": [
-              "elem-electrode-AF7",
-              "elem-electrode-AF8",
-              "elem-electrode-TP9",
-              "elem-electrode-TP10"
-            ]
-          }
-        ],
-        "twinAliases": [],
-        "visuals": [
+            "type": "ExpressionRangeVisual",
+            "expressionType": "CategoricalValues",
+            "valueExpression": "PrimaryTwin.quality < 0.5",
+            "displayName": "Poor contact warning",
+            "valueRanges": [
+              {
+                "id": "vr-qual-bad",
+                "values": [true],
+                "visual": { "iconName": "Warning", "color": "#ff8c1a", "labelExpression": "Weak contact" }
+              }
+            ],
+            "objectIDs": { "expression": "objectIDs" }
+          },
           {
             "type": "Popover",
-            "title": "Signal quality alert",
+            "title": "Electrode live bands",
             "widgets": [
               {
-                "type": "Value",
-                "valueExpression": "PrimaryTwin.quality",
-                "widgetConfiguration": {
-                  "displayName": "Quality q(t)",
-                  "type": "double",
-                  "unitOfMeasure": ""
-                }
+                "type": "Value", "id": "w-beta",
+                "widgetConfiguration": { "displayName": "Beta",  "valueExpression": "PrimaryTwin.beta",  "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-theta",
+                "widgetConfiguration": { "displayName": "Theta", "valueExpression": "PrimaryTwin.theta", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-alpha",
+                "widgetConfiguration": { "displayName": "Alpha", "valueExpression": "PrimaryTwin.alpha", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-qual",
+                "widgetConfiguration": { "displayName": "Quality q(t)", "valueExpression": "PrimaryTwin.quality", "type": "double" }
               }
-            ]
+            ],
+            "objectIDs": { "expression": "objectIDs" }
           }
         ]
       },
       {
         "id": "behavior-head-pflow",
-        "displayName": "Flow halo on head (pFlow)",
+        "displayName": "Flow halo (pFlow)",
         "datasources": [
           {
             "type": "ElementTwinToObjectMappingDataSource",
-            "elementIDs": ["elem-head-flow"]
+            "elementIDs": ["elem-user"]
           }
         ],
         "visuals": [
           {
-            "type": "StatusColoring",
-            "statusValueExpression": "PrimaryTwin.currentPFlow",
+            "type": "ExpressionRangeVisual",
+            "expressionType": "NumericRange",
+            "valueExpression": "PrimaryTwin.currentPFlow",
+            "displayName": "pFlow coloring",
             "valueRanges": [
-              { "id": "pf-no",   "values": [0, 0.5],   "visual": { "color": "#445566" } },
-              { "id": "pf-mid",  "values": [0.5, 0.7], "visual": { "color": "#aaaa55" } },
-              { "id": "pf-yes",  "values": [0.7, 1.01],"visual": { "color": "#44cc66" } }
-            ]
+              { "id": "pf-no",  "values": [0, 0.5],         "visual": { "color": "#445566", "labelExpression": "No flow" } },
+              { "id": "pf-mid", "values": [0.5, 0.7],       "visual": { "color": "#aaaa55", "labelExpression": "Warming up" } },
+              { "id": "pf-yes", "values": [0.7, "Infinity"],"visual": { "color": "#44cc66", "labelExpression": "In flow" } }
+            ],
+            "objectIDs": { "expression": "objectIDs" }
           },
           {
-            "type": "Badge",
-            "iconName": "Brain",
-            "color": { "type": "StaticColor", "color": "#ffffff" },
-            "label": "pFlow=${PrimaryTwin.currentPFlow:0.3f}, CME rate=${PrimaryTwin.currentCmeRateVnPerSec:0.2f} Vn/s"
+            "type": "Popover",
+            "title": "User cognitive state",
+            "widgets": [
+              {
+                "type": "Value", "id": "w-pflow",
+                "widgetConfiguration": { "displayName": "p(Flow)", "valueExpression": "PrimaryTwin.currentPFlow", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-cme",
+                "widgetConfiguration": { "displayName": "CME rate (Vn/s)", "valueExpression": "PrimaryTwin.currentCmeRateVnPerSec", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-eng",
+                "widgetConfiguration": { "displayName": "Engagement index", "valueExpression": "PrimaryTwin.engagementIndex", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-load",
+                "widgetConfiguration": { "displayName": "Cognitive load", "valueExpression": "PrimaryTwin.cognitiveLoadIndex", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-relax",
+                "widgetConfiguration": { "displayName": "Relaxation", "valueExpression": "PrimaryTwin.relaxationIndex", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-flowmin",
+                "widgetConfiguration": { "displayName": "Flow minutes today", "valueExpression": "PrimaryTwin.flowMinutesToday", "type": "double" }
+              }
+            ],
+            "objectIDs": { "expression": "objectIDs" }
+          }
+        ]
+      },
+      {
+        "id": "behavior-headband-status",
+        "displayName": "Headband connection state",
+        "datasources": [
+          {
+            "type": "ElementTwinToObjectMappingDataSource",
+            "elementIDs": ["elem-headband"]
+          }
+        ],
+        "visuals": [
+          {
+            "type": "ExpressionRangeVisual",
+            "expressionType": "CategoricalValues",
+            "valueExpression": "PrimaryTwin.connectionState",
+            "displayName": "Connection state coloring",
+            "valueRanges": [
+              { "id": "hb-conn",   "values": ["connected"],    "visual": { "color": "#3a7d44", "labelExpression": "Connected" } },
+              { "id": "hb-degr",   "values": ["degraded"],     "visual": { "color": "#d0b341", "labelExpression": "Degraded" } },
+              { "id": "hb-disc",   "values": ["disconnected"], "visual": { "color": "#a83232", "labelExpression": "Disconnected" } }
+            ],
+            "objectIDs": { "expression": "objectIDs" }
+          },
+          {
+            "type": "Popover",
+            "title": "Headband health",
+            "widgets": [
+              {
+                "type": "Value", "id": "w-conn",
+                "widgetConfiguration": { "displayName": "Connection", "valueExpression": "PrimaryTwin.connectionState", "type": "string" }
+              },
+              {
+                "type": "Value", "id": "w-drop",
+                "widgetConfiguration": { "displayName": "Dropouts / hr", "valueExpression": "PrimaryTwin.dropoutCountLastHour", "type": "integer" }
+              },
+              {
+                "type": "Value", "id": "w-sq",
+                "widgetConfiguration": { "displayName": "Mean signal quality", "valueExpression": "PrimaryTwin.lastSignalQualityMean", "type": "double" }
+              },
+              {
+                "type": "Value", "id": "w-batt",
+                "widgetConfiguration": { "displayName": "Battery %", "valueExpression": "PrimaryTwin.batteryLevel", "type": "double" }
+              }
+            ],
+            "objectIDs": { "expression": "objectIDs" }
           }
         ]
       }

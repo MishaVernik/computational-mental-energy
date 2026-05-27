@@ -20,34 +20,34 @@
       }
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "delta",
       "schema": "double",
-      "description": "Delta band power (1-4 Hz), in microV^2."
+      "description": "Latest delta band power (1-4 Hz), in microV^2."
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "theta",
       "schema": "double",
-      "description": "Theta band power (4-8 Hz), in microV^2."
+      "description": "Latest theta band power (4-8 Hz), in microV^2."
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "alpha",
       "schema": "double",
-      "description": "Alpha band power (8-13 Hz), in microV^2."
+      "description": "Latest alpha band power (8-13 Hz), in microV^2."
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "beta",
       "schema": "double",
-      "description": "Beta band power (13-30 Hz), in microV^2."
+      "description": "Latest beta band power (13-30 Hz), in microV^2."
     },
     {
-      "@type": "Telemetry",
+      "@type": "Property",
       "name": "gamma",
       "schema": "double",
-      "description": "Gamma band power (30-45 Hz), in microV^2."
+      "description": "Latest gamma band power (30-45 Hz), in microV^2."
     },
     {
       "@type": "Property",

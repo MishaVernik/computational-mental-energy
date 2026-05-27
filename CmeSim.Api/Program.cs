@@ -136,7 +136,10 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy.WithOrigins("http://localhost:3000", "http://localhost:3001",
-                           "http://192.168.1.10:3001", "http://192.168.1.10:3000")
+                           "http://192.168.1.10:3001", "http://192.168.1.10:3000",
+                           "http://161.97.146.52:3001", "http://161.97.146.52:5000",
+                           "https://cmeflow.entertainmentpl.com",
+                           "http://cmeflow.entertainmentpl.com")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();

@@ -48,9 +48,51 @@ Start-Sleep -Seconds 10
 Section "DTDL model upload"
 
 if ($Reset) {
-  Write-Host "  -Reset specified: deleting all twins, relationships, and existing models." -ForegroundColor Yellow
-  # JMESPath identifiers starting with $ (e.g. $dtId) clash with PowerShell variable
-  # interpolation no matter how they're escaped; parse JSON in PowerShell instead.
+  Write-Host "  -Reset specified: wiping twins + models so the new DTDL schema can take effect." -ForegroundColor Yellow
+
+  # Prefer the server-side bulk-delete job (~30s for any twin count). Fall back to
+  # per-twin az calls only if the deletion job command isn't available.
+  $jobsAvailable = $false
+  try {
+    $null = & az dt job deletion --help 2>$null
+    if ($LASTEXITCODE -eq 0) { $jobsAvailable = $true }
+  } catch { $jobsAvailable = $false }
+
+  if ($jobsAvailable) {
+    Write-Host "  using server-side bulk deletion job (az dt job deletion create)"
+    $jobJson = & az dt job deletion create --dt-name $AdtName --yes -o json 2>&1 | Out-String
+    $jobId = ""
+    try {
+      $j = $jobJson | ConvertFrom-Json
+      $jobId = $j.id
+    } catch { }
+    if (-not $jobId) {
+      Write-Host "  job submit response: $jobJson"
+      throw "Could not start bulk deletion job."
+    }
+    Write-Host "  job id: $jobId"
+    # Poll until terminal state (succeeded/failed/cancelled). Max wait 5 min.
+    $status = ''
+    for ($i = 0; $i -lt 60; $i++) {
+      Start-Sleep -Seconds 5
+      $st = & az dt job deletion show --dt-name $AdtName --job-id $jobId -o json 2>$null | ConvertFrom-Json
+      $status = $st.status
+      Write-Host "  [$([int]($i*5))s] job status: $status"
+      if ($status -in @('succeeded','failed','cancelled','notrun')) { break }
+    }
+    if ($status -ne 'succeeded') {
+      throw "Bulk deletion job ended with status: $status. Inspect with: az dt job deletion show --dt-name $AdtName --job-id $jobId"
+    }
+    Ok "Bulk deletion job succeeded; all twins + models wiped"
+    # Skip the per-twin loop below — proceed straight to model upload.
+    $skipManualDelete = $true
+  } else {
+    $skipManualDelete = $false
+  }
+}
+
+if ($Reset -and -not $skipManualDelete) {
+  # 1. Enumerate twins (parse JSON in PS; jmespath fights $-prefixed keys).
   $twinsJson = & az dt twin query --dt-name $AdtName --query-command "SELECT * FROM digitaltwins" -o json 2>$null
   $allTwins  = @()
   if ($twinsJson) {
@@ -59,31 +101,79 @@ if ($Reset) {
       $allTwins = @($parsed.result | ForEach-Object { $_.'$dtId' } | Where-Object { $_ })
     } catch { $allTwins = @() }
   }
+  Write-Host "  found $($allTwins.Count) twins to delete (each az CLI call ~2-3s overhead; total ~8-10 min)"
 
+  # 2. Delete relationships first (twin delete fails if relationships exist).
+  $relCount = 0
+  $i = 0
   foreach ($t in $allTwins) {
+    $i++
+    if ($i % 10 -eq 0 -or $i -eq $allTwins.Count) {
+      Write-Host ("  [rels {0,3}/{1,-3}] scanning relationships ... ({2} found so far)" -f $i, $allTwins.Count, $relCount)
+    }
     $relJson = & az dt twin relationship list --dt-name $AdtName --twin-id $t -o json 2>$null
     if ($relJson) {
       try {
         $relIds = @(($relJson | ConvertFrom-Json) | ForEach-Object { $_.'$relationshipId' } | Where-Object { $_ })
         foreach ($r in $relIds) {
-          & az dt twin relationship delete --dt-name $AdtName --twin-id $t --relationship-id $r --yes --only-show-errors 2>&1 | Out-Null
+          & az dt twin relationship delete --dt-name $AdtName --twin-id $t --relationship-id $r --only-show-errors 2>&1 | Out-Null
+          $relCount++
         }
       } catch { }
     }
   }
+  Write-Host "  deleted $relCount relationships"
+
+  # 3. Delete twins (no dependency ordering issue once relationships are gone).
+  $i = 0
   foreach ($t in $allTwins) {
-    & az dt twin delete --dt-name $AdtName --twin-id $t --yes --only-show-errors 2>&1 | Out-Null
+    $i++
+    if ($i % 10 -eq 0 -or $i -eq $allTwins.Count) {
+      Write-Host ("  [twins {0,3}/{1,-3}] deleting ..." -f $i, $allTwins.Count)
+    }
+    & az dt twin delete --dt-name $AdtName --twin-id $t --only-show-errors 2>&1 | Out-Null
   }
-  $existingModels = (& az dt model list --dt-name $AdtName --query "[].id" -o tsv 2>$null) -split "`n" | Where-Object { $_ }
-  # Models reference each other; retry until everything is gone or progress stalls.
-  for ($pass = 0; $pass -lt 5 -and $existingModels.Count -gt 0; $pass++) {
-    foreach ($m in $existingModels) {
-      & az dt model delete --dt-name $AdtName --dtmi $m --only-show-errors 2>&1 | Out-Null
+  # Verify all twins really gone (delete is async on ADT side).
+  $remaining = $allTwins.Count
+  for ($wait = 0; $wait -lt 12 -and $remaining -gt 0; $wait++) {
+    Start-Sleep -Seconds 2
+    $check = & az dt twin query --dt-name $AdtName --query-command "SELECT * FROM digitaltwins" -o json 2>$null
+    if ($check) {
+      try {
+        $remaining = @(($check | ConvertFrom-Json).result).Count
+      } catch { $remaining = 0 }
+    } else { $remaining = 0 }
+  }
+  if ($remaining -gt 0) {
+    throw "Reset failed: $remaining twin(s) still exist after 24 s. Stop cme-api before re-running so it cannot recreate twins."
+  }
+  Write-Host "  all twins gone"
+
+  # 4. Delete models in reverse dependency order:
+  #    User -> Session/Headband -> Electrode/Activity/Window
+  $deleteOrder = @(
+    "dtmi:cme:User;1",
+    "dtmi:cme:Session;1",
+    "dtmi:cme:Headband;1",
+    "dtmi:cme:Electrode;1",
+    "dtmi:cme:Window;1",
+    "dtmi:cme:Activity;1"
+  )
+  for ($pass = 0; $pass -lt 3; $pass++) {
+    $existing = @((& az dt model list --dt-name $AdtName --query "[].id" -o tsv 2>$null) -split "`n" | Where-Object { $_ })
+    if ($existing.Count -eq 0) { break }
+    foreach ($m in $deleteOrder) {
+      if ($existing -contains $m) {
+        & az dt model delete --dt-name $AdtName --dtmi $m --only-show-errors 2>&1 | Out-Null
+      }
     }
     Start-Sleep -Seconds 2
-    $existingModels = (& az dt model list --dt-name $AdtName --query "[].id" -o tsv 2>$null) -split "`n" | Where-Object { $_ }
   }
-  Ok "Cleared $($allTwins.Count) twins and $($existingModels.Count) leftover models"
+  $leftover = @((& az dt model list --dt-name $AdtName --query "[].id" -o tsv 2>$null) -split "`n" | Where-Object { $_ })
+  if ($leftover.Count -gt 0) {
+    throw "Reset failed: $($leftover.Count) model(s) still exist after delete passes: $($leftover -join ', '). Aborting before re-upload to avoid silent schema drift."
+  }
+  Ok "Cleared $($allTwins.Count) twins, $relCount relationships, and all 6 models"
 }
 
 $existingDtmis = (az dt model list --dt-name $AdtName --query "[].id" -o tsv) -split "`n"

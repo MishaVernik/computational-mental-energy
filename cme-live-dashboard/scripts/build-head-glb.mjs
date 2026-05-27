@@ -148,6 +148,18 @@ const nose = addPrimitive(doc, 'Nose', uvSphere(0.3, 16, 20), SKIN_DARK);
 nose.setTranslation([0, 0.0, 0.85]).setScale([0.35, 0.55, 0.4]);
 scene.addChild(nose);
 
+// Eyes (whites + pupils), matches the local dashboard so the face is unambiguous.
+const EYE_WHITE = [1.0, 1.0, 1.0, 1.0];
+const PUPIL     = [0.16, 0.16, 0.16, 1.0];
+for (const [name, x] of [['EyeL', -0.22], ['EyeR', 0.22]]) {
+  const white = addPrimitive(doc, name, uvSphere(0.08, 20, 24), EYE_WHITE, 0.1, 0.3);
+  white.setTranslation([x, 0.18, 0.78]);
+  scene.addChild(white);
+  const pupil = addPrimitive(doc, `${name}_Pupil`, uvSphere(0.04, 14, 18), PUPIL, 0.1, 0.4);
+  pupil.setTranslation([x, 0.18, 0.85]);
+  scene.addChild(pupil);
+}
+
 const earL = addPrimitive(doc, 'EarL', uvSphere(0.5, 16, 20), SKIN_DARK);
 earL.setTranslation([-0.82, 0.0, -0.05]).setScale([0.12, 0.3, 0.22]);
 scene.addChild(earL);
@@ -160,12 +172,47 @@ const neck = addPrimitive(doc, 'Neck', cylinder(0.32, 0.40, 0.45, 24), [0.78, 0.
 neck.setTranslation([0, -1.15, -0.05]);
 scene.addChild(neck);
 
-// Headband: tilted torus, sits on the cranium like a real Muse.
-const HB_TILT = Math.PI / 2 - 0.18;
+// Headband: a horizontal torus that wraps around the forehead, like a real Muse.
+// torus() outputs the ring in the XZ plane (axis along +Y) - already horizontal at rot=0.
+// We apply a small forward tilt about X so the front edge dips ~6° (Muse silhouette).
+// Position: y=0.38 puts the band on the brow line (eyes are at y=0.18, top of cranium at y≈0.95).
+const HB_TILT = 0.10;
 const sinH = Math.sin(HB_TILT / 2), cosH = Math.cos(HB_TILT / 2);
-const headband = addPrimitive(doc, 'MuseHeadband', torus(0.92, 0.04, 64, 16), [0.06, 0.06, 0.08, 1.0], 0.55, 0.4);
-headband.setTranslation([0, 0.45, -0.05]).setRotation([sinH, 0, 0, cosH]);
+const HB_R = 0.92;
+const HB_Y = 0.38;
+const HB_Z = -0.04;
+const headband = addPrimitive(doc, 'MuseHeadband', torus(HB_R, 0.035, 96, 16), [0.06, 0.06, 0.08, 1.0], 0.55, 0.4);
+headband.setTranslation([0, HB_Y, HB_Z]).setRotation([sinH, 0, 0, cosH]);
 scene.addChild(headband);
+
+// Glowing Muse logo bump on the front of the band (rides with the same tilt).
+function boxGeom(sx, sy, sz) {
+  const x = sx / 2, y = sy / 2, z = sz / 2;
+  const positions = new Float32Array([
+    -x,-y, z,  x,-y, z,  x, y, z, -x, y, z,  // +Z
+    -x,-y,-z, -x, y,-z,  x, y,-z,  x,-y,-z,  // -Z
+    -x, y,-z, -x, y, z,  x, y, z,  x, y,-z,  // +Y
+    -x,-y,-z,  x,-y,-z,  x,-y, z, -x,-y, z,  // -Y
+     x,-y,-z,  x, y,-z,  x, y, z,  x,-y, z,  // +X
+    -x,-y,-z, -x,-y, z, -x, y, z, -x, y,-z,  // -X
+  ]);
+  const normals = new Float32Array([
+    0,0,1, 0,0,1, 0,0,1, 0,0,1,
+    0,0,-1,0,0,-1,0,0,-1,0,0,-1,
+    0,1,0, 0,1,0, 0,1,0, 0,1,0,
+    0,-1,0,0,-1,0,0,-1,0,0,-1,0,
+    1,0,0, 1,0,0, 1,0,0, 1,0,0,
+    -1,0,0,-1,0,0,-1,0,0,-1,0,0,
+  ]);
+  const indices = new Uint16Array([
+    0,1,2,0,2,3, 4,5,6,4,6,7, 8,9,10,8,10,11,
+    12,13,14,12,14,15, 16,17,18,16,18,19, 20,21,22,20,22,23,
+  ]);
+  return { positions, normals, indices };
+}
+const logo = addPrimitive(doc, 'MuseLogo', boxGeom(0.1, 0.05, 0.035), [0.39, 0.71, 0.96, 1.0], 0.2, 0.35);
+logo.setTranslation([0, HB_Y - Math.sin(HB_TILT) * HB_R, HB_Z + Math.cos(HB_TILT) * HB_R]).setRotation([sinH, 0, 0, cosH]);
+scene.addChild(logo);
 
 // Electrodes as flat metallic discs, oriented along the surface normal.
 const ELECTRODES = [
